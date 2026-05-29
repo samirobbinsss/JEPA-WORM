@@ -1,0 +1,19 @@
+# Tierpsy feature-set pinning for Story 6.1.
+#
+# The neural-decoding partial-R² metric residualizes JEPA's latent against
+# the kinematic baseline: Tierpsy-256 features + temporal derivatives +
+# pose-only TCN latent. This file pins the Tierpsy version and the feature
+# list so the residualization is reproducible.
+#
+# Real values populate in Story 6.1; placeholder format kept frozen so any
+# downstream eval reads a stable shape.
+
+schema_version: 1
+tierpsy:
+  version: PLACEHOLDER_VERSION  # e.g., "1.5.1" — pin to a PyPI release
+  feature_list:
+    - PLACEHOLDER_FEATURE_1
+    - PLACEHOLDER_FEATURE_2
+  derivatives:
+    enabled: true
+    orders: [1]  # first temporal derivative; second-derivative optional

@@ -1,0 +1,38 @@
+# Kalman baseline on real-data chain (Story 8.10).
+#
+# Chains synthetic + baaiworm + the three Schafer/Flavell loaders against
+# committed tests/fixtures/. Synthetic + baaiworm are pose-bearing drivers;
+# the file-based loaders contribute samples for the FR8 contract path.
+schema_version: 1
+
+baseline:
+  name: kalman
+  horizons_seconds: [0.1, 1.0]  # 5s would need 50 frames; smoke clips are 16
+  frame_dt_seconds: 0.1
+  seed: 42
+
+dataset:
+  loaders:
+    - name: synthetic
+      n_keypoints: 49
+      clip_frames: 16
+      n_worms: 4
+      clips_per_worm: 2
+    - name: baaiworm
+      clip_frames: 16
+      n_worms: 2
+      clips_per_worm: 1
+      n_keypoints: 49
+      n_neurons: 8
+    - name: flavell_2023
+      local_root: tests/fixtures/flavell_2023
+      clip_frames: 8
+      image_size: 64
+    - name: wormbehavior_db
+      local_root: tests/fixtures/wormbehavior_db
+      clip_frames: 8
+      image_size: 64
+    - name: openworm_movement
+      local_root: tests/fixtures/openworm_movement
+      clip_frames: 8
+      image_size: 64

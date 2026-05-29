@@ -1,0 +1,57 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 6 (2026-05-20): E4 recipe + warm-start heads at reduced weight.
+#
+# Experiment 4 found the anti-collapse recipe (heads OFF). Experiment 5
+# turned the four warm-start heads back ON at full weight and the recipe
+# broke — std collapsed 0.117 -> 0.013, jepa diverged 493 -> 846. The
+# heads' auxiliary losses on the online latent (eigenworm 0.1,
+# graph_prior 0.01, neural 0.1, behavioral 0.1) drag the encoder to a
+# task-compact collapsed solution, overpowering the variance/covariance
+# regularizers.
+#
+# E6 keeps the heads ON but scales every head loss weight by 0.1
+# (warm_start_loss_scale). They still warm-start — they just nudge the
+# encoder instead of dragging it. One axis changes from E5. If std stays
+# healthy (~0.3+) and jepa keeps dropping, 0.1 is viable; if it still
+# collapses, drop to 0.01; if the heads then under-train, find the
+# middle.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: true
+    graph_prior: true
+    neural: true
+    behavioral: true
+  warm_start_loss_scale: 0.1
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 25.0
+  covariance_reg_weight: 0.2
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

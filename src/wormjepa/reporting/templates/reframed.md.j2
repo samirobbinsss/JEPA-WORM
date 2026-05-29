@@ -1,0 +1,29 @@
+{# Outcome-aware template: reframed claim (Story 7.3) #}
+# JEPA-WORM Phase 0 — Reframed Result
+
+**Run ID:** `{{ run_id }}`
+**Outcome:** `reframed`
+
+The kill-criterion did *not* fire (JEPA matches or beats the
+Transformer-on-eigenworms baseline at 1 s), but the headline neural-decoding
+partial-R² did not clear the pre-registered 0.05 threshold. Per the
+pre-registered pivot plan, the headline contribution reframes as
+**motif recovery** (Row 2): a vision-only JEPA latent that recovers Flavell
+behavioral states on held-out worms via Hungarian-matched ARI. The neural
+decoding result is reported as an honest negative in the same table.
+
+## Results table
+
+| Metric | Producer | Point | 95% CI | Verdict |
+|---|---|---|---|---|
+{% for entry in entries -%}
+| {{ entry.name }} | {{ entry.producer }} | {{ "%.3f"|format(entry.ci.point) }} | [{{ "%.3f"|format(entry.ci.lower) }}, {{ "%.3f"|format(entry.ci.upper) }}] | {{ entry.notes }} |
+{% endfor %}
+
+## Compute statement
+
+See `compute.json` in the same results directory.
+
+## Citations
+
+See `CITATIONS.bib` for full references.

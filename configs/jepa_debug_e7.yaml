@@ -1,0 +1,59 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 7 (2026-05-20): two-phase curriculum.
+#
+# Experiments 5 and 6 showed the warm-start heads, co-trained with the
+# encoder from step 1, collapse the representation at any head weight
+# (full and 0.1x both: std -> ~0.013, jepa diverged). The heads apply a
+# different objective — predict pose / neural / connectome from the
+# latent — that fights JEPA's predict-the-target.
+#
+# E7 separates the two: warm_start_after_step=300. For the first 300
+# steps the heads are inactive and the encoder trains pure-JEPA (the E4
+# recipe, proven stable). At step 300 the online encoder is FROZEN and
+# the four warm-start heads switch on for the remaining 200 steps —
+# they warm-start by reading the stable representation, and a frozen
+# encoder cannot collapse. n_steps 500 = 300 phase-1 + 200 phase-2.
+#
+# Success: std stays healthy through step 300 (phase 1, as E4), holds
+# flat after the freeze, and the head losses drop in phase 2.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: true
+    graph_prior: true
+    neural: true
+    behavioral: true
+  warm_start_loss_scale: 1.0
+  warm_start_after_step: 300
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 25.0
+  covariance_reg_weight: 0.2
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

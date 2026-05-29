@@ -1,0 +1,23 @@
+# Kalman / persistence baseline config (Story 3.4).
+#
+# Phase 0 v0: pure persistence. Future-pose floor — confirms JEPA and the
+# other baselines clear an "easy bar." Real horizons match the pre-registered
+# values that land in pre-registration/configs/headline.yaml at Story 4.8.
+schema_version: 1
+
+baseline:
+  name: kalman
+  horizons_seconds: [0.1, 1.0, 5.0]
+  frame_dt_seconds: 0.1
+  seed: 0
+
+# Story 8.10: baselines now consume the same DatasetSection schema as the
+# JEPA runner. Default is a single synthetic loader (pre-8.10 behaviour).
+# To run against real data, replace with a chained loader spec like
+# configs/jepa_smoke_realdata.yaml.
+dataset:
+  loaders:
+    - name: synthetic
+      clip_frames: 16
+      n_worms: 4
+      clips_per_worm: 3

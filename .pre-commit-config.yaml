@@ -1,0 +1,72 @@
+# Pre-commit hooks for JEPA-WORM Phase 0.
+#
+# Story 1.1 scope: ruff (lint + format) and pyright (strict).
+# Story 4.5 adds: wormjepa-manifest-check, wormjepa-changelog-frozen.
+#
+# Hooks are scoped via global exclude to wormjepa source files + project-root config.
+# Vendor directories (BMAD/Claude skills) and planning artifacts are excluded.
+
+exclude: '^(\.claude/|_bmad/|_bmad-output/|docs/|data/downloads/|results/|log\.md|CLAUDE\.md|uv\.lock)'
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # pyright runs via uv against the project venv (not an isolated pre-commit
+  # venv). This avoids re-installing torch/timm/pyav into a separate hook env
+  # — the project already has them via uv.lock, and our type-checking
+  # accuracy depends on the same versions the code runs against.
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright (project venv via uv)
+        entry: uv run pyright
+        language: system
+        pass_filenames: false
+        files: ^src/wormjepa/.*\.py$
+        types: [python]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Ambiguous-unicode guard. Mirrors ruff RUF002/RUF003 but at commit time
+  # across the whole staged set — faster feedback than waiting for ruff.
+  - repo: local
+    hooks:
+      - id: check-ambiguous-unicode
+        name: ambiguous unicode guard (caveman gotcha)
+        entry: python3 scripts/dev/check_ambiguous_unicode.py
+        language: system
+        files: ^src/.*\.py$
+        pass_filenames: true
+
+  # Story 4.5: pre-registration enforcement.
+  # Skips silently until Story 4.8 commits the initial MANIFEST.lock.
+  - repo: local
+    hooks:
+      - id: wormjepa-manifest-check
+        name: wormjepa MANIFEST.lock verification
+        entry: uv run python scripts/check_manifest.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: wormjepa-changelog-frozen
+        name: wormjepa CHANGELOG frozen-artifact enforcement
+        entry: uv run python scripts/check_changelog_frozen.py
+        language: system
+        pass_filenames: false
+        always_run: true

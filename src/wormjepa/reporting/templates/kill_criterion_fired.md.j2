@@ -1,0 +1,31 @@
+{# Outcome-aware template: kill-criterion fired (Story 7.3) #}
+# JEPA-WORM Phase 0 — Pre-registered Negative Result
+
+**Run ID:** `{{ run_id }}`
+**Outcome:** `kill_criterion_fired`
+
+The pre-registered kill-criterion fired: JEPA did not beat the
+Transformer-on-eigenworms baseline at the 1 s future-pose horizon (worm-level
+95% CI). Per `pre-registration/PRE-REGISTRATION.md`, Phase B/C work stops and
+this result is the published outcome.
+
+This is not a failure of the falsifiable-evaluation contribution. The protocol
+itself — pre-registered thresholds, worm-level grouping, kill-criterion
+discipline — is the methodological result. The negative answer to "does
+JEPA-on-worm-video beat pose-only forecasting at 1 s" is itself publishable.
+
+## Results table
+
+| Metric | Producer | Point | 95% CI | Verdict |
+|---|---|---|---|---|
+{% for entry in entries -%}
+| {{ entry.name }} | {{ entry.producer }} | {{ "%.3f"|format(entry.ci.point) }} | [{{ "%.3f"|format(entry.ci.lower) }}, {{ "%.3f"|format(entry.ci.upper) }}] | {{ entry.notes }} |
+{% endfor %}
+
+## Compute statement
+
+See `compute.json` in the same results directory.
+
+## Citations
+
+See `CITATIONS.bib` for full references.

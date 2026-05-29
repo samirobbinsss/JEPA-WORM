@@ -1,0 +1,123 @@
+[project]
+name = "wormjepa"
+version = "0.1.0"
+description = "JEPA-WORM Phase 0: self-supervised vision-only world model for C. elegans, validated end-to-end on public data before any hardware procurement."
+readme = "README.md"
+authors = [
+    { name = "Sami Rabinovitch" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "av>=17.0.1",
+    "dandi>=0.65.0",
+    "einops>=0.8.0",
+    "h5py>=3.12.0",
+    "jinja2>=3.1.6",
+    "numpy>=2.4.4",
+    "opencv-python>=4.13.0.92",
+    "pyarrow>=24.0.0",
+    "pydantic>=2.13.4",
+    "pynwb>=2.8.0",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "statsmodels>=0.14.6",
+    "timm>=1.0.27",
+    "torch>=2.11.0",
+    # torchvision is pulled in transitively by timm; declared explicitly so
+    # the [tool.uv.sources] cu128 pin applies (uv source overrides only
+    # bind to direct dependencies).
+    "torchvision>=0.26.0",
+    "typer>=0.25.1",
+]
+
+[project.scripts]
+wormjepa = "wormjepa.cli.main:main"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "N",    # pep8-naming
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "T20",  # flake8-print (no print statements per patterns)
+    "PTH",  # flake8-use-pathlib (no os.path.join per patterns)
+    "ANN",  # flake8-annotations (type annotations required)
+]
+ignore = [
+    "ANN401",  # Allow Any in specific documented cases (per architecture)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "T20"]  # tests can skip annotations, allow print for debug
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pyright]
+include = ["src"]  # tests are typechecked on-demand via `uv run pyright tests/`
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "data/downloads",
+    "results",
+]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+reportMissingImports = true
+reportMissingTypeStubs = false  # many ML libs ship without stubs
+reportUnknownMemberType = false  # too aggressive against numpy/torch in v1
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportPrivateImportUsage = false  # ML libs (torch, numpy) lack __all__ declarations
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra --strict-markers"
+
+[dependency-groups]
+dev = [
+    "plotly>=5.24.0",
+    "pre-commit>=4.6.0",
+    "pyright>=1.1.409",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+    "streamlit>=1.40.0",
+    "watchdog>=6.0.0",
+]
+
+# PyPI's default torch wheel (2.11+) is a CUDA-13 build (`+cu130`), which
+# needs an NVIDIA driver new enough for CUDA 13 (driver >= ~580). Most GPU
+# pods ship CUDA-12.x drivers, so cu130 torch fails there with
+# "NVIDIA driver too old". Pin the Linux torch to the CUDA-12.8 build
+# instead — it runs on any driver >= ~525 (the common case). macOS (no
+# CUDA index wheels) falls back to the default PyPI wheel via the marker.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+# torchvision (pulled in transitively by timm) is C++-ABI-coupled to torch:
+# a cu130 torchvision against a cu128 torch fails at import with
+# "operator torchvision::nms does not exist". Pin both to the same index.
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux'" }]

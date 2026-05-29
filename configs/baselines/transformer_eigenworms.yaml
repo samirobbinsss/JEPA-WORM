@@ -1,0 +1,22 @@
+# Transformer-on-eigenworms baseline — kill-criterion comparator (Story 3.5).
+#
+# Autoregressive Transformer over eigenworm coefficients. JEPA must beat this
+# at the 1s future-pose horizon to clear the pre-registered kill-criterion.
+#
+# Phase 0 v0 uses an eigenworm basis fit via PCA on whatever pose data the
+# loader yields (synthetic in this build). Story 4.7 swaps in the Stephens
+# 2008 basis pinned in pre-registration/baseline_features/.
+schema_version: 1
+
+baseline:
+  name: transformer_eigenworms
+  horizons_seconds: [0.1, 1.0, 5.0]
+  frame_dt_seconds: 0.1
+  seed: 0
+
+dataset:
+  loaders:
+    - name: synthetic
+      clip_frames: 16
+      n_worms: 4
+      clips_per_worm: 3

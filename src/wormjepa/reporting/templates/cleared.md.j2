@@ -1,0 +1,31 @@
+{# Outcome-aware template: thresholds cleared (Story 7.3) #}
+# JEPA-WORM Phase 0 — Headline result
+
+**Run ID:** `{{ run_id }}`
+**Outcome:** `cleared`
+
+The pre-registered headline thresholds cleared. JEPA's vision-only,
+neurally-grounded latent decodes held-out head-neuron activity with a partial-R²
+that exceeds the kinematic-baseline ceiling and the neural-prior ablation
+floor; the session-ID classifier is at chance.
+
+## Results table
+
+| Metric | Producer | Point | 95% CI | Verdict |
+|---|---|---|---|---|
+{% for entry in entries -%}
+| {{ entry.name }} | {{ entry.producer }} | {{ "%.3f"|format(entry.ci.point) }} | [{{ "%.3f"|format(entry.ci.lower) }}, {{ "%.3f"|format(entry.ci.upper) }}] | {{ entry.notes }} |
+{% endfor %}
+
+## Pre-registration link
+
+This result is reportable under the commitments in
+`pre-registration/PRE-REGISTRATION.md` (frozen via `MANIFEST.lock`).
+
+## Compute statement
+
+See `compute.json` in the same results directory.
+
+## Citations
+
+See `CITATIONS.bib` for full references.

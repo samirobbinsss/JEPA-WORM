@@ -1,0 +1,536 @@
+% JEPA-WORM Phase 0 — Bibliography
+%
+% Every dataset, baseline-reference paper, and external method used by the
+% project gets a stable BibTeX entry here. Auto-included in publishable
+% reports rendered by `wormjepa report` (Epic 7 Story 7.8).
+%
+% Datasets are populated in Epic 2 Story 2.3 (data/SOURCES.md mirror).
+% Method references are populated as each module imports them.
+%
+% Format: standard BibTeX. The pre-commit hook (after Epic 4) checks this file
+% parses without errors via bibtexparser.
+%
+% Entry-key convention: lowercase, kebab-case, suffixed with the canonical
+% publication year (e.g. ``vjepa2-2025``, ``flavell-2023``).
+%
+% Entries with ``note = "citation needed — verify against ..."`` are
+% placeholders where the canonical reference has not been independently
+% confirmed by the authoring agent. Verify before quoting in any
+% reportable artefact.
+
+% ============================================================
+% Datasets (Phase 0 pre-registered)
+% ============================================================
+
+@misc{sprague-wormid-2025,
+    title  = {{WormID}: A federated whole-brain calcium-imaging corpus of {\em Caenorhabditis elegans}},
+    author = {Sprague, Daniel Y. and others},
+    year   = {2025},
+    note   = {DANDI federation of 7 dandisets (NP/000715, EY/000541, SK1/000565, SK2/000472, KK/000692, HL/000714, SF/000776) pinned in src/wormjepa/data/sources/wormid.py. Per-dandiset DOI/version locked at v2 manifest (2026-05-14). citation needed — verify against Sprague et al. Cell Reports Methods 2025 once preprint/DOI is canonical.},
+    url    = {https://dandiarchive.org/},
+    howpublished = {DANDI Archive},
+    keywords = {dataset, wormid, dandi}
+}
+
+@dataset{dandi-000472,
+    title     = {{DANDI} dandiset 000472 ({SK2}): immobilized microfluidic, 10 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000472/0.241009.1502},
+    version   = {0.241009.1502},
+    note      = {WormID federation member; train cohort (SK lab, kept paired with SK1/000565).}
+}
+
+@dataset{dandi-000541,
+    title     = {{DANDI} dandiset 000541 ({EY}): immobilized microfluidic, 21 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000541/0.241009.1457},
+    version   = {0.241009.1457},
+    note      = {WormID federation member; train cohort, largest non-SF immobilized lab.}
+}
+
+@dataset{dandi-000565,
+    title     = {{DANDI} dandiset 000565 ({SK1}): immobilized microfluidic, 21 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000565/0.241009.1504},
+    version   = {0.241009.1504},
+    note      = {WormID federation member; train cohort (SK lab, kept paired with SK2/000472).}
+}
+
+@dataset{dandi-000692,
+    title     = {{DANDI} dandiset 000692 ({KK}): semi-restricted microfluidic, 9 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000692/0.240402.2118},
+    version   = {0.240402.2118},
+    note      = {WormID federation member; train cohort, only semi-restricted lab in the corpus.}
+}
+
+@dataset{dandi-000714,
+    title     = {{DANDI} dandiset 000714 ({HL}): immobilized microfluidic, 9 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000714/0.241009.1516},
+    version   = {0.241009.1516},
+    note      = {WormID federation member; eval cohort (within-distribution arm). Materialization deferred to Phase 0 Growth (content-shape: NeuroPAL volumetric, not behavioral video).}
+}
+
+@dataset{dandi-000715,
+    title     = {{DANDI} dandiset 000715 ({NP}): NeuroPAL canonical, immobilized, 10 worms},
+    author    = {{WormID Consortium}},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000715/0.241009.1514},
+    version   = {0.241009.1514},
+    note      = {WormID federation member; train cohort; NeuroPAL canonical reference.}
+}
+
+@dataset{dandi-000776,
+    title     = {{DANDI} dandiset 000776 ({SF}): freely-moving, 38 worms ({Sprague-Flavell})},
+    author    = {{WormID Consortium} and Atanas, Adam A. and Flavell, Steven W.},
+    year      = {2024},
+    publisher = {DANDI Archive},
+    doi       = {10.48324/dandi.000776/0.241009.1509},
+    version   = {0.241009.1509},
+    note      = {WormID federation member; eval cohort (out-of-distribution arm). Same dandiset that backs Atanas/Flavell-2023 raw video. Materialization deferred to Phase 0 Growth on disk-capacity grounds (1.01 TB).}
+}
+
+@article{atanas-flavell-2023,
+    title   = {Brain-wide representations of behavior spanning multiple timescales and states in {\em C. elegans}},
+    author  = {Atanas, Adam A. and Kim, Jungsoo and Wang, Ziyu and Bueno, Eric and Becker, McCoy and Kang, Di and Park, Jungyeon and Kramer, Talya S. and Wan, Flossie K. and Baskoylu, Saba and Dag, Ugur and Kalogeropoulou, Elpiniki and Gomes, Mathew A. and Estrem, Cassi and Cohen, Netta and Mansinghka, Vikash K. and Flavell, Steven W.},
+    journal = {Cell},
+    year    = {2023},
+    volume  = {186},
+    number  = {19},
+    pages   = {4134--4151.e31},
+    doi     = {10.1016/j.cell.2023.07.035},
+    url     = {https://www.wormwideweb.org/},
+    note    = {Phase 0 pin Zenodo record 10.5281/zenodo.8150515 (CePNEM analysis + ANTSUN weights). Raw video corpus lives on DANDI 000776 (redundant with WormID-SF; materialization deferred to Phase 0 Growth per Story 9.1).}
+}
+
+@dataset{atanas-flavell-2023-zenodo,
+    title     = {{Atanas, Flavell, et al. 2023} {Cell} paper: analysis artefacts and {ANTSUN} segmentation weights},
+    author    = {Atanas, Adam A. and Flavell, Steven W.},
+    year      = {2023},
+    publisher = {Zenodo},
+    doi       = {10.5281/zenodo.8150515},
+    note      = {Companion analysis-only payload for atanas-flavell-2023; not the raw video corpus (that is dandi-000776). Pinned at v2 lock 2026-05-14.}
+}
+
+@article{yemini-brown-2013,
+    title   = {A database of {\em Caenorhabditis elegans} behavioral phenotypes},
+    author  = {Yemini, Eviatar and Jucikas, Tadas and Grundy, Laura J. and Brown, Andr{\'e} E.~X. and Schafer, William R.},
+    journal = {Nature Methods},
+    year    = {2013},
+    volume  = {10},
+    number  = {9},
+    pages   = {877--879},
+    doi     = {10.1038/nmeth.2560},
+    note    = {WormBehavior Database; Phase 0 pins a pre-registered stratified subset (100 records, 20 per strain x 5 strains) of the Schafer-lab Zenodo per-experiment deposits; anchor records 10.5281/zenodo.1031550 and 10.5281/zenodo.1029149.}
+}
+
+@article{javer-openworm-2018,
+    title   = {An open-source platform for analyzing and sharing worm-behavior data},
+    author  = {Javer, Avelino and Currie, Michael and Lee, Chee Wai and Hokanson, Jim and Li, Kezhi and Mart{\'\i}neaz-P{\'e}rez, C{\'e}line and Nyamsuren, Enkhdul and Sayilo{\u{g}}lu, Olcay and Brown, Andr{\'e} E.~X.},
+    journal = {Nature Methods},
+    year    = {2018},
+    volume  = {15},
+    number  = {9},
+    pages   = {645--646},
+    doi     = {10.1038/s41592-018-0112-1},
+    note    = {Open Worm Movement Database; Phase 0 pins a pre-registered stratified subset (100 records, 20 per strain x 5 strains, mutants distinct from WormBehaviorDB) of the Schafer-lab Zenodo per-experiment deposits; anchor records 10.5281/zenodo.1031550 and 10.5281/zenodo.1033265. citation needed — verify exact author list against Nature Methods 2018 record.}
+}
+
+@software{zhao-baaiworm-2024,
+    title        = {{BAAIWorm}: a synthetic neural-and-body trajectory generator for {\em C. elegans}},
+    author       = {Zhao, Mengdi and others},
+    year         = {2024},
+    version      = {v1.0.0},
+    note         = {Phase 0 pins commit 699d3ddb4c2d6a7dc2ac72c3574aee01673fc934 (tag v1.0.0); generator config Metaworm/args/run_worm_swim_args.txt at SHA-256 bbc9fa9bdd08982cd6506a7148fbb70e321eb04ad774b026fe2a0d877cc2845b. Companion paper: Zhao et al. Nature Computational Science 2024. citation needed — verify against published Nature Comp Sci entry.},
+    url          = {https://github.com/Jessie940611/BAAIWorm}
+}
+
+% ============================================================
+% Methodology (statistics + protocol)
+% ============================================================
+
+@article{efron-bca-1987,
+    title   = {Better bootstrap confidence intervals},
+    author  = {Efron, Bradley},
+    journal = {Journal of the American Statistical Association},
+    year    = {1987},
+    volume  = {82},
+    number  = {397},
+    pages   = {171--185},
+    doi     = {10.1080/01621459.1987.10478410},
+    note    = {BCa (bias-corrected and accelerated) bootstrap. Phase 0 bootstrap method per PRE-REGISTRATION.md "Statistical protocol".}
+}
+
+@book{efron-tibshirani-1993,
+    title     = {An Introduction to the Bootstrap},
+    author    = {Efron, Bradley and Tibshirani, Robert J.},
+    publisher = {Chapman \& Hall/CRC},
+    year      = {1993},
+    series    = {Monographs on Statistics and Applied Probability},
+    number    = {57},
+    isbn      = {978-0412042317},
+    note      = {Canonical bootstrap reference; jackknife-over-worms acceleration for BCa per wormjepa.eval.bootstrap.}
+}
+
+@article{davison-hinkley-1997,
+    title     = {Bootstrap Methods and their Application},
+    author    = {Davison, Anthony C. and Hinkley, David V.},
+    publisher = {Cambridge University Press},
+    year      = {1997},
+    isbn      = {978-0521574716},
+    note      = {Worm-level (cluster/group) bootstrap protocol reference for FR28 / NFR16. citation needed — confirm chapter on grouped bootstrap.}
+}
+
+@article{holm-1979,
+    title   = {A simple sequentially rejective multiple test procedure},
+    author  = {Holm, Sture},
+    journal = {Scandinavian Journal of Statistics},
+    year    = {1979},
+    volume  = {6},
+    number  = {2},
+    pages   = {65--70},
+    url     = {https://www.jstor.org/stable/4615733},
+    note    = {Holm step-down multiple-comparison correction at alpha=0.05 per PRE-REGISTRATION.md and wormjepa.eval.multiple_comparison.}
+}
+
+@article{benjamini-hochberg-1995,
+    title   = {Controlling the false discovery rate: a practical and powerful approach to multiple testing},
+    author  = {Benjamini, Yoav and Hochberg, Yosef},
+    journal = {Journal of the Royal Statistical Society B},
+    year    = {1995},
+    volume  = {57},
+    number  = {1},
+    pages   = {289--300},
+    doi     = {10.1111/j.2517-6161.1995.tb02031.x},
+    note    = {Alternative correction (BH/FDR) available via statsmodels in wormjepa.eval.multiple_comparison; not the Phase 0 primary choice.}
+}
+
+@article{kuhn-1955,
+    title   = {The {Hungarian} method for the assignment problem},
+    author  = {Kuhn, Harold W.},
+    journal = {Naval Research Logistics Quarterly},
+    year    = {1955},
+    volume  = {2},
+    number  = {1-2},
+    pages   = {83--97},
+    doi     = {10.1002/nav.3800020109},
+    note    = {Hungarian assignment used for motif-ARI cluster matching (FR26) via scipy.optimize.linear_sum_assignment.}
+}
+
+@article{hubert-arabie-1985,
+    title   = {Comparing partitions},
+    author  = {Hubert, Lawrence and Arabie, Phipps},
+    journal = {Journal of Classification},
+    year    = {1985},
+    volume  = {2},
+    number  = {1},
+    pages   = {193--218},
+    doi     = {10.1007/BF01908075},
+    note    = {Adjusted Rand Index (ARI) — Hungarian-matched on cluster labels in wormjepa.eval.motif_ari.}
+}
+
+% ============================================================
+% Models + architectures
+% ============================================================
+
+@article{lecun-2022,
+    title  = {A path towards autonomous machine intelligence},
+    author = {LeCun, Yann},
+    year   = {2022},
+    note   = {OpenReview position paper introducing the {JEPA} (Joint Embedding Predictive Architecture) framing; load-bearing for the Phase 0 architectural vision (see _bmad-output/planning-artifacts/architectural-vision-lecun-2022.md).},
+    url    = {https://openreview.net/forum?id=BZ5a1r-kVsf}
+}
+
+@article{assran-ijepa-2023,
+    title     = {Self-supervised learning from images with a joint-embedding predictive architecture},
+    author    = {Assran, Mahmoud and Duval, Quentin and Misra, Ishan and Bojanowski, Piotr and Vincent, Pascal and Rabbat, Michael and LeCun, Yann and Ballas, Nicolas},
+    booktitle = {CVPR},
+    year      = {2023},
+    doi       = {10.1109/CVPR52729.2023.01499},
+    note      = {I-JEPA: original image-domain JEPA realisation; predecessor to V-JEPA.}
+}
+
+@misc{vjepa2-2025,
+    title  = {{V-JEPA 2}: self-supervised video representation learning at scale},
+    author = {{Meta FAIR}},
+    year   = {2025},
+    note   = {Phase 0 backbone uses the V-JEPA 2.1 release (March 2026) ported pretraining recipe: EMA target encoder, masked spatiotemporal predictor, joint-embedding predictive objective. citation needed — verify against canonical Meta FAIR V-JEPA 2 / 2.1 publication.},
+    url    = {https://github.com/facebookresearch/jepa}
+}
+
+@inproceedings{vicreg-2022,
+    title     = {{VICReg}: variance-invariance-covariance regularization for self-supervised learning},
+    author    = {Bardes, Adrien and Ponce, Jean and LeCun, Yann},
+    booktitle = {ICLR},
+    year      = {2022},
+    note      = {Variance/invariance/covariance regulariser sometimes paired with JEPA-style objectives to prevent latent collapse. Considered as a regulariser; not load-bearing in Phase 0 v0.},
+    url       = {https://arxiv.org/abs/2105.04906}
+}
+
+@inproceedings{dosovitskiy-vit-2021,
+    title     = {An image is worth 16x16 words: transformers for image recognition at scale},
+    author    = {Dosovitskiy, Alexey and Beyer, Lucas and Kolesnikov, Alexander and Weissenborn, Dirk and Zhai, Xiaohua and Unterthiner, Thomas and Dehghani, Mostafa and Minderer, Matthias and Heigold, Georg and Gelly, Sylvain and Uszkoreit, Jakob and Houlsby, Neil},
+    booktitle = {ICLR},
+    year      = {2021},
+    note      = {Vision Transformer (ViT); the V-JEPA 2.1 backbone Phase 0 ports.},
+    url       = {https://arxiv.org/abs/2010.11929}
+}
+
+@article{stephens-2008-eigenworms,
+    title   = {Dimensionality and dynamics in the behavior of {\em C. elegans}},
+    author  = {Stephens, Greg J. and Johnson-Kerner, Bethany and Bialek, William and Ryu, William S.},
+    journal = {PLOS Computational Biology},
+    year    = {2008},
+    volume  = {4},
+    number  = {4},
+    pages   = {e1000028},
+    doi     = {10.1371/journal.pcbi.1000028},
+    note    = {Eigenworm basis: 4D posture manifold (the Stephens 2008 prior). Used as the eigenworm warm-start head (wormjepa.models.warm_start.eigenworm) and as the Transformer-eigenworms baseline's representation.}
+}
+
+@article{cook-2019-connectome,
+    title   = {Whole-animal connectomes of both {\em Caenorhabditis elegans} sexes},
+    author  = {Cook, Steven J. and Jarrell, Travis A. and Brittin, Christopher A. and Wang, Yi and Bloniarz, Adam E. and Yakovlev, Maksim A. and Nguyen, Ken C.~Q. and Tang, Leo T.-H. and Bayer, Emily A. and Duerr, Janet S. and B\"{u}low, Hannes E. and Hobert, Oliver and Hall, David H. and Emmons, Scott W.},
+    journal = {Nature},
+    year    = {2019},
+    volume  = {571},
+    number  = {7763},
+    pages   = {63--71},
+    doi     = {10.1038/s41586-019-1352-7},
+    note    = {C. elegans whole-animal connectome (hermaphrodite + male). Source for the graph-prior auxiliary head (wormjepa.models.warm_start.graph_prior). Data hosted at wormwiring.org.}
+}
+
+@article{bhaskar-2025-elife,
+    title   = {Masked spatiotemporal prediction for self-supervised pose embeddings in {\em C. elegans}},
+    author  = {Bhaskar, Dhananjay and others},
+    journal = {eLife},
+    year    = {2025},
+    note    = {Nearest published analog to Phase 0 — contrastive on pose vs predictive in joint-embedding space on pixels. Cited as related work in PRD Innovation section. citation needed — verify exact title, author list, and DOI against eLife 2025.}
+}
+
+@article{vame-luxem-2022,
+    title   = {Identifying behavioral structure from deep variational embeddings of animal motion},
+    author  = {Luxem, Kevin and Mocellin, Petra and Fuhrmann, Falko and Kürsch, Johannes and Miller, Stephanie R. and Palop, Jorge J. and Remy, Stefan and Bauer, Pavol},
+    journal = {Communications Biology},
+    year    = {2022},
+    volume  = {5},
+    pages   = {1267},
+    doi     = {10.1038/s42003-022-04080-7},
+    note    = {VAME (Variational Animal Motion Embedding) — motif-recovery baseline reference for Row 2 of the PRD measurable-outcomes table.}
+}
+
+@article{javer-tierpsy-2018,
+    title   = {Tierpsy tracker: phenotyping behavior of {\em C. elegans} at scale},
+    author  = {Javer, Avelino and Ripoll-S{\'a}nchez, Luis and Brown, Andr{\'e} E.~X.},
+    journal = {Philosophical Transactions of the Royal Society B},
+    year    = {2018},
+    volume  = {373},
+    pages   = {20170375},
+    doi     = {10.1098/rstb.2017.0375},
+    note    = {Tierpsy feature set (Tierpsy-256). Pinned via pre-registration/baseline_features/tierpsy_pin.yaml. citation needed — verify exact Phil Trans B reference (Javer 2018 series).}
+}
+
+@article{deeplabcut-mathis-2018,
+    title   = {{DeepLabCut}: markerless pose estimation of user-defined body parts with deep learning},
+    author  = {Mathis, Alexander and Mamidanna, Pranav and Cury, Kevin M. and Abe, Taiga and Murthy, Venkatesh N. and Mathis, Mackenzie W. and Bethge, Matthias},
+    journal = {Nature Neuroscience},
+    year    = {2018},
+    volume  = {21},
+    number  = {9},
+    pages   = {1281--1289},
+    doi     = {10.1038/s41593-018-0209-7},
+    note    = {DeepLabCut markerless pose estimation. Referenced as a code-to-port-from reference in architecture.md; not currently a runtime dependency in Phase 0.}
+}
+
+% ============================================================
+% Software dependencies
+% ============================================================
+
+@software{pytorch,
+    title  = {{PyTorch}: an imperative style, high-performance deep learning library},
+    author = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and Desmaison, Alban and K{\"o}pf, Andreas and Yang, Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and Chintala, Soumith},
+    year   = {2019},
+    note   = {Pinned at torch >= 2.11.0 in pyproject.toml. NeurIPS 2019.},
+    url    = {https://pytorch.org/}
+}
+
+@software{numpy-harris-2020,
+    title   = {Array programming with {NumPy}},
+    author  = {Harris, Charles R. and Millman, K.~Jarrod and van der Walt, St{\'e}fan J. and Gommers, Ralf and Virtanen, Pauli and Cournapeau, David and Wieser, Eric and Taylor, Julian and Berg, Sebastian and Smith, Nathaniel J. and Kern, Robert and Picus, Matti and Hoyer, Stephan and van Kerkwijk, Marten H. and Brett, Matthew and Haldane, Allan and del R{\'\i}o, Jaime Fern{\'a}ndez and Wiebe, Mark and Peterson, Pearu and G{\'e}rard-Marchant, Pierre and Sheppard, Kevin and Reddy, Tyler and Weckesser, Warren and Abbasi, Hameer and Gohlke, Christoph and Oliphant, Travis E.},
+    journal = {Nature},
+    year    = {2020},
+    volume  = {585},
+    pages   = {357--362},
+    doi     = {10.1038/s41586-020-2649-2},
+    note    = {Pinned at numpy >= 2.4.4 in pyproject.toml.}
+}
+
+@article{scipy-virtanen-2020,
+    title   = {{SciPy} 1.0: fundamental algorithms for scientific computing in {Python}},
+    author  = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and Haberland, Matt and Reddy, Tyler and Cournapeau, David and Burovski, Evgeni and Peterson, Pearu and Weckesser, Warren and Bright, Jonathan and van der Walt, St{\'e}fan J. and Brett, Matthew and Wilson, Joshua and Millman, K.~Jarrod and Mayorov, Nikolay and Nelson, Andrew R.~J. and Jones, Eric and Kern, Robert and Larson, Eric and Carey, C.~J. and Polat, {\.I}lhan and Feng, Yu and Moore, Eric W. and VanderPlas, Jake and Laxalde, Denis and Perktold, Josef and Cimrman, Robert and Henriksen, Ian and Quintero, E.~A. and Harris, Charles R. and Archibald, Anne M. and Ribeiro, Ant{\^o}nio H. and Pedregosa, Fabian and van Mulbregt, Paul},
+    journal = {Nature Methods},
+    year    = {2020},
+    volume  = {17},
+    pages   = {261--272},
+    doi     = {10.1038/s41592-019-0686-2},
+    note    = {Pinned at scipy >= 1.17.1 in pyproject.toml. Used for scipy.optimize.linear_sum_assignment (Hungarian) and scipy.stats.}
+}
+
+@article{scikit-learn-pedregosa-2011,
+    title   = {Scikit-learn: machine learning in {Python}},
+    author  = {Pedregosa, Fabian and Varoquaux, Ga{\"e}l and Gramfort, Alexandre and Michel, Vincent and Thirion, Bertrand and Grisel, Olivier and Blondel, Mathieu and Prettenhofer, Peter and Weiss, Ron and Dubourg, Vincent and Vanderplas, Jake and Passos, Alexandre and Cournapeau, David and Brucher, Matthieu and Perrot, Matthieu and Duchesnay, {\'E}douard},
+    journal = {Journal of Machine Learning Research},
+    year    = {2011},
+    volume  = {12},
+    pages   = {2825--2830},
+    url     = {https://www.jmlr.org/papers/v12/pedregosa11a.html},
+    note    = {Pinned at scikit-learn >= 1.8.0 in pyproject.toml. Used for Ridge / LinearRegression linear probes (FR27) and sklearn.metrics.adjusted_rand_score (FR26).}
+}
+
+@inproceedings{statsmodels-seabold-2010,
+    title     = {Statsmodels: econometric and statistical modeling with {Python}},
+    author    = {Seabold, Skipper and Perktold, Josef},
+    booktitle = {Proceedings of the 9th Python in Science Conference (SciPy 2010)},
+    year      = {2010},
+    pages     = {92--96},
+    doi       = {10.25080/Majora-92bf1922-011},
+    note      = {Pinned at statsmodels >= 0.14.6 in pyproject.toml. Used for statsmodels.stats.multitest.multipletests (Holm / BH; FR34, NFR17).}
+}
+
+@software{pydantic,
+    title   = {Pydantic: data validation using {Python} type hints},
+    author  = {Colvin, Samuel and contributors},
+    year    = {2024},
+    version = {2.13.4},
+    url     = {https://docs.pydantic.dev/},
+    note    = {Pinned at pydantic >= 2.13.4 in pyproject.toml. Config schema validation (FR12, NFR12) and the load-bearing WormGrouping API (FR28, NFR16).}
+}
+
+@software{typer,
+    title  = {Typer: build great {CLIs} with {Python} type hints},
+    author = {Ram{\'\i}rez, Sebasti{\'a}n},
+    year   = {2024},
+    url    = {https://typer.tiangolo.com/},
+    note   = {Pinned at typer >= 0.25.1 in pyproject.toml. CLI framework for ``wormjepa run / eval / report / preregister``.}
+}
+
+@software{timm-wightman-2019,
+    title   = {{PyTorch Image Models} ({timm})},
+    author  = {Wightman, Ross},
+    year    = {2019},
+    version = {1.0.27},
+    url     = {https://github.com/rwightman/pytorch-image-models},
+    doi     = {10.5281/zenodo.4414861},
+    note    = {Pinned at timm >= 1.0.27 in pyproject.toml. ViT backbone provider for the encoder (architecture.md Training Stack).}
+}
+
+@software{pyav,
+    title  = {{PyAV}: {Pythonic} bindings for {FFmpeg}},
+    author = {{PyAV contributors}},
+    year   = {2024},
+    note   = {Pinned at av >= 17.0.1 in pyproject.toml. Video decoding backend; chosen over decord per architecture.md Data Stack.},
+    url    = {https://github.com/PyAV-Org/PyAV}
+}
+
+@software{dandi-cli,
+    title  = {{DANDI Client}},
+    author = {{DANDI Team}},
+    year   = {2024},
+    note   = {Pinned at dandi >= 0.65.0 in pyproject.toml. Used to fetch the WormID federation dandisets via their pinned versions.},
+    url    = {https://github.com/dandi/dandi-cli}
+}
+
+@software{pynwb,
+    title  = {{PyNWB}: a {Python} API for {Neurodata Without Borders}},
+    author = {{NeurodataWithoutBorders Consortium}},
+    year   = {2024},
+    note   = {Pinned at pynwb >= 2.8.0 in pyproject.toml. NWB-format readers for DANDI payload.},
+    url    = {https://pynwb.readthedocs.io/}
+}
+
+@article{nwb-rubel-2022,
+    title   = {The {Neurodata Without Borders} ecosystem for neurophysiological data science},
+    author  = {Rübel, Oliver and Tritt, Andrew and Ly, Ryan and Dichter, Benjamin K. and Ghosh, Satrajit and Niu, Lawrence and Baker, Pamela and Soltesz, Ivan and Ng, Lydia and Svoboda, Karel and Frank, Loren and Bouchard, Kristofer E.},
+    journal = {eLife},
+    year    = {2022},
+    volume  = {11},
+    pages   = {e78362},
+    doi     = {10.7554/eLife.78362},
+    note    = {NWB format reference cited by DANDI payload structure.}
+}
+
+@software{h5py,
+    title  = {{h5py}: {HDF5} for {Python}},
+    author = {Collette, Andrew and contributors},
+    year   = {2024},
+    note   = {Pinned at h5py >= 3.12.0 in pyproject.toml. HDF5 reader used by pynwb and Zenodo payload loaders.},
+    url    = {https://www.h5py.org/}
+}
+
+@software{einops,
+    title  = {{einops}: clear and reliable tensor operations},
+    author = {Rogozhnikov, Alex},
+    year   = {2024},
+    note   = {Pinned at einops >= 0.8.0 in pyproject.toml. Tensor reshape/rearrange ergonomics in the JEPA model code.},
+    url    = {https://github.com/arogozhnikov/einops}
+}
+
+@software{opencv,
+    title  = {{OpenCV}},
+    author = {Bradski, Gary},
+    year   = {2000},
+    note   = {Pinned at opencv-python >= 4.13.0.92 in pyproject.toml. Image preprocessing utilities.},
+    url    = {https://opencv.org/}
+}
+
+@software{pyarrow,
+    title  = {{Apache Arrow} ({PyArrow})},
+    author = {{Apache Arrow contributors}},
+    year   = {2024},
+    note   = {Pinned at pyarrow >= 24.0.0 in pyproject.toml. Parquet writer for bootstrap-samples.parquet under the results contract.},
+    url    = {https://arrow.apache.org/}
+}
+
+@software{pyyaml,
+    title  = {{PyYAML}},
+    author = {Simonov, Kirill and contributors},
+    year   = {2024},
+    note   = {Pinned at pyyaml >= 6.0.3 in pyproject.toml. YAML config + MANIFEST.lock parser.},
+    url    = {https://pyyaml.org/}
+}
+
+@software{jinja2,
+    title  = {{Jinja2}: a full-featured template engine for {Python}},
+    author = {Ronacher, Armin and contributors},
+    year   = {2024},
+    note   = {Pinned at jinja2 >= 3.1.6 in pyproject.toml. Outcome-aware report templates (FR36, FR37).},
+    url    = {https://jinja.palletsprojects.com/}
+}
+
+@software{rich,
+    title  = {{Rich}: terminal formatting for {Python}},
+    author = {McGugan, Will and contributors},
+    year   = {2024},
+    note   = {Pinned at rich >= 15.0.0 in pyproject.toml. Console output formatting per architecture.md Reporting Stack.},
+    url    = {https://github.com/Textualize/rich}
+}
+
+@software{uv,
+    title  = {{uv}: a fast {Python} package and project manager},
+    author = {{Astral}},
+    year   = {2024},
+    note   = {Primary environment manager. ``uv.lock`` is the FR41 reproducibility deliverable; ``uv init --package`` is the project starter (architecture.md Starter Template).},
+    url    = {https://github.com/astral-sh/uv}
+}

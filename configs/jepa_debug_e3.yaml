@@ -1,0 +1,56 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 3 (2026-05-20): pure-JEPA + variance reg + covariance reg.
+#
+# Experiment 2 (jepa_debug_e2.yaml) showed variance_reg=100 lifts per-dim
+# std from 0.014 to ~1.2 (collapse beaten) — but the latent dimensions
+# then collapse onto a correlated subspace: cov_offdiag 12 -> 1395, and
+# the jepa loss stalls at ~330 (the representation is high-variance but
+# effectively low-rank, so the predictor cannot improve).
+#
+# E3 adds VICReg's third term — the covariance regularizer — to
+# decorrelate the dims. One knob changes from E2:
+# covariance_reg_weight 0 -> 0.2. Calibration: E2's covariance loss term
+# (sum of squared off-diagonal / D) is ~1900 at the correlated state;
+# weight 0.2 -> ~380, comparable to the stalled jepa ~330, so the term
+# applies real decorrelation pressure without dwarfing the predictor.
+# As the dims decorrelate the term shrinks. Watch cov_offdiag come down
+# AND the jepa loss resume dropping.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: false
+    graph_prior: false
+    neural: false
+    behavioral: false
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 100.0
+  covariance_reg_weight: 0.2
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

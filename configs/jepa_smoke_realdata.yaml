@@ -1,0 +1,54 @@
+# JEPA smoke config exercising the real-data loaders (Story 8.9).
+#
+# Same shape as configs/jepa_smoke.yaml but pulls samples from the
+# committed real-format fixtures under tests/fixtures/. Used both by the
+# local CPU smoke test and as the template for the remote GPU run that
+# Story 8.9's AC consumes.
+schema_version: 1
+
+jepa:
+  model_name: vit_tiny_patch16_224
+  img_size: 64
+  latent_dim: 32
+  masking_ratio: 0.5
+  n_steps: 2
+  learning_rate: 0.0001
+  ema_decay: 0.99
+  seed: 42
+  warm_start:
+    eigenworm: true
+    graph_prior: true
+    neural: true
+    behavioral: true  # Flavell loader surfaces behavioral_state.
+
+dataset:
+  # Synthetic leads the chain because the v0 JEPA loop requires a sample
+  # carrying *both* pose AND neural to drive a gradient step (loop.py
+  # silently skips samples missing either). Real loaders contribute samples
+  # so the FR8 contract path is exercised end-to-end against real bytes,
+  # but their pose=None / neural=None nature means they don't currently
+  # advance the optimiser. A follow-up story can soften the loop's
+  # requirement so real samples drive their warm-start head only.
+  loaders:
+    - name: synthetic
+      clip_frames: 16
+      n_worms: 4
+      clips_per_worm: 2
+    - name: baaiworm
+      clip_frames: 16
+      n_worms: 2
+      clips_per_worm: 1
+      n_keypoints: 16  # smaller K for the smoke; full 49 is slow rasterisation
+      n_neurons: 8
+    - name: flavell_2023
+      local_root: tests/fixtures/flavell_2023
+      clip_frames: 8
+      image_size: 64
+    - name: wormbehavior_db
+      local_root: tests/fixtures/wormbehavior_db
+      clip_frames: 8
+      image_size: 64
+    - name: openworm_movement
+      local_root: tests/fixtures/openworm_movement
+      clip_frames: 8
+      image_size: 64

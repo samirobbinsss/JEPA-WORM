@@ -1,0 +1,19 @@
+# Random-features baseline (Story 3.7).
+#
+# Frozen random TCN encoder + trainable linear pose head. JEPA-literature
+# sanity check — headline result must beat random features by a non-trivial
+# margin (Epic 6).
+schema_version: 1
+
+baseline:
+  name: random_features
+  horizons_seconds: [0.1, 1.0, 5.0]
+  frame_dt_seconds: 0.1
+  seed: 0
+
+dataset:
+  loaders:
+    - name: synthetic
+      clip_frames: 16
+      n_worms: 4
+      clips_per_worm: 3

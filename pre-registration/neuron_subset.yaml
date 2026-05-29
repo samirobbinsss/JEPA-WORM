@@ -1,0 +1,21 @@
+# Pre-committed "non-trivial" neuron subset for Story 6.7.
+#
+# These are head neurons whose decoding from a vision-only latent would be
+# non-trivial — i.e., their activity is not linearly predictable from the
+# Tierpsy-256 pose features alone on the WormID-train split. Committed
+# *before* training so the eval (Epic 6) cannot be selection-tuned.
+#
+# Real values are populated when Phase 0 first sees the WormID-train cohort
+# (Story 6.7 entry-point). Until then this placeholder serves as the format
+# anchor and is frozen via MANIFEST.lock so any change requires a CHANGELOG
+# `### Frozen-artifact changes` entry.
+
+schema_version: 1
+neuron_subset:
+  # Format: each entry is one head-neuron identifier from the WormID corpus,
+  # with optional notes. Names follow the standard C. elegans nomenclature
+  # (AVA, AVB, AIY, RIM, ...). The selection criterion is documented above;
+  # methods for fitting the kinematic baseline that "trivializes" the rest
+  # live in src/wormjepa/eval/neuron_subsets.py (Story 6.7).
+  - name: PLACEHOLDER_NEURON_1
+    note: Populated in Story 6.7 entry-point

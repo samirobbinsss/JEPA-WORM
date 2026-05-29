@@ -1,0 +1,143 @@
+# WormID train/eval cohort split — schema v2 (lab-level).
+#
+# Substance pre-registered at 2026-05-14 alongside the v2 MANIFEST.lock
+# rollback. Methodologically substantive contents:
+#
+# - The COHORT POLICY is "hold out labs entirely from train" — every
+#   worm in the eval dandisets is excluded from train, and every worm in
+#   the train dandisets is excluded from eval. Zero overlap at the
+#   worm level by construction, no enumeration required.
+# - The EVAL labs are HL and SF (47 worms across two distinct setup
+#   types: HL standard immobilized + SF freely-moving). This pairing
+#   tests within-distribution (HL) and out-of-distribution (SF, the
+#   only freely-moving lab) generalization simultaneously.
+# - The TRAIN labs are NP, EY, SK (SK1 + SK2 kept together to avoid
+#   within-lab leakage), and KK (71 worms across 4 labs and 2 setup
+#   types — immobilized + semi-restricted).
+#
+# Per-worm enumeration is intentionally deferred: it is implementation
+# detail at data-fetch time, not a methodological commitment. Lab-level
+# cohort assignment is the binding pre-registration.
+#
+# Modifying this file requires a `### Frozen-artifact changes` CHANGELOG
+# entry per FR48 / NFR14.
+
+schema_version: 2
+
+# Pin the WormID federation that this split applies to. The corpus
+# identity is pinned in pre-registration/MANIFEST.lock via
+# canonicalization `dandi_federation` over 7 dandisets.
+wormid_federation_locked_in: pre-registration/MANIFEST.lock
+
+cohort_policy: hold_out_labs
+
+# Zero-overlap invariant: every worm in any train_labs dandiset is
+# excluded from eval; every worm in any eval_labs dandiset is excluded
+# from train. Enforced by-construction via lab-level disjoint sets,
+# not by per-worm enumeration.
+zero_overlap_invariant: worm-level via disjoint dandiset partition
+
+train_labs:
+  - lab: NP
+    dandisets:
+      - "000715"
+    n_worms: 10
+    setup: immobilized microfluidic
+    rationale: NeuroPAL canonical reference dataset
+    materialization_status: phase-0-growth-deferred
+  - lab: EY
+    dandisets:
+      - "000541"
+    n_worms: 21
+    setup: immobilized microfluidic
+    rationale: largest non-SF immobilized cohort
+    materialization_status: phase-0-growth-deferred
+  - lab: SK
+    dandisets:
+      - "000565"
+      - "000472"
+    n_worms: 31
+    setup: immobilized microfluidic
+    rationale: SK1 (21 worms) and SK2 (10 worms) kept together to prevent within-lab leakage
+    materialization_status: phase-0-growth-deferred
+  - lab: KK
+    dandisets:
+      - "000692"
+    n_worms: 9
+    setup: semi-restricted microfluidic
+    rationale: only semi-restricted lab; adds rig diversity to train without depriving eval of free-moving
+    materialization_status: phase-0-growth-deferred
+
+eval_labs:
+  - lab: HL
+    dandisets:
+      - "000714"
+    n_worms: 9
+    setup: immobilized microfluidic
+    rationale: standard immobilized cohort in eval; tests within-distribution generalization
+    materialization_status: phase-0-growth-deferred
+    materialization_deferral:
+      decided_at: 2026-05-18
+      reason: |
+        Per 2026-05-18 WormID content-shape discovery, HL contains only
+        `NeuroPALImageRaw` (MultiChannelVolume, static 3D volume per
+        worm). It does not provide the time-series `ImageSeries`
+        behavioral video the vision-only JEPA encoder (FR17) requires.
+        Treating it as a T=1 clip would make the pre-registered
+        time-series metrics (future-pose 1s, session-ID classifier,
+        bootstrap CI grouping per session) non-computable.
+      pre_reg_impact: |
+        Materialization deferred to Phase 0 Growth alongside SF. The
+        lab-level cohort policy and zero-overlap invariant remain
+        pre-registered commitments; the entire WormID federation is
+        marked phase-0-growth-deferred at the materialization layer.
+  - lab: SF
+    dandisets:
+      - "000776"
+    n_worms: 38
+    setup: freely moving
+    rationale: only freely-moving lab; tests out-of-distribution generalization across rig types
+    materialization_status: phase-0-growth-deferred
+    materialization_deferral:
+      decided_at: 2026-05-18
+      reason: |
+        SF (000776) is 1.01 TB on the DANDI server (high-resolution video
+        per worm across the 38-worm freely-moving cohort). Local dev disk
+        capacity at decision time was 245 GB free; the full corpus does
+        not fit. Train cohort (5 dandisets, 177 GB) plus HL eval cohort
+        (9 worms, 0.48 GB) fit and proceed under Phase 0; SF
+        materialization defers to Phase 0 Growth, where rented compute
+        and storage are scoped.
+      pre_reg_impact: |
+        The lab-level cohort policy ("eval = HL + SF") remains the
+        pre-registered commitment; SF is not removed from the lock or
+        from this split, only its **materialization** is deferred.
+        Phase 0 gate evaluation therefore runs on HL alone (9 worms,
+        within-distribution generalization signal only). The
+        out-of-distribution generalization signal that SF was designed
+        to provide is not testable in Phase 0; it lands at the Phase 0
+        Growth materialization of SF.
+      records_at:
+        - _bmad-output/planning-artifacts/phase-0-growth-architecture-scope.md
+        - CHANGELOG.md (2026-05-18 Frozen-artifact-changes entry)
+
+totals:
+  # As pre-registered ("intended materialization"):
+  train_n_worms: 71
+  train_n_labs: 4
+  eval_n_worms: 47
+  eval_n_labs: 2
+  total_n_worms: 118
+  # Phase 0 active subset after the 2026-05-18 SF deferral:
+  phase_0_active_eval_n_worms: 9
+  phase_0_active_eval_n_labs: 1
+  phase_0_active_total_n_worms: 80
+  # Phase 0 active subset after the 2026-05-18 HL deferral (WormID content-shape
+  # discovery: HL is NeuroPAL volumetric, not behavioral video; FR17 forbids
+  # vision-only encoder from consuming neural input → entire WormID federation
+  # is phase-0-growth-deferred at the materialization layer):
+  phase_0_active_train_n_worms: 0
+  phase_0_active_train_n_labs: 0
+  phase_0_active_eval_n_worms_after_hl_deferral: 0
+  phase_0_active_eval_n_labs_after_hl_deferral: 0
+  phase_0_active_total_n_worms_after_hl_deferral: 0

@@ -1,0 +1,90 @@
+artifacts:
+- canonicalization: text_lf
+  description: Methodological commitments document.
+  path: pre-registration/PRE-REGISTRATION.md
+  sha256: eee88639111cd06209be479ab00c863c77bd5eb32eb0bb4fb41d8a700bc26442
+- canonicalization: yaml_sorted_keys_lf
+  description: Tierpsy version + feature list pinning.
+  path: pre-registration/baseline_features/tierpsy_pin.yaml
+  sha256: 256a1a3aafb0aa9af6ba34b29a0f822d65d589b7242eb1d2361b640298ee9375
+- canonicalization: yaml_sorted_keys_lf
+  description: Locked headline-run configuration.
+  path: pre-registration/configs/headline.yaml
+  sha256: 9b7c8b6433a3d250e2fc38163a2fad37a0b43ba1376d419c5dcd1e633a1fc0e1
+- canonicalization: yaml_sorted_keys_lf
+  description: Pre-committed non-trivial neuron subset.
+  path: pre-registration/neuron_subset.yaml
+  sha256: 760211319d2f36214b50e82bb4e9a69975b14a441da1f617c234d2e8a2e09542
+- canonicalization: python_ast_normalized
+  description: Frozen neural-decoding probe code.
+  path: pre-registration/probes/neural_decoding.py
+  sha256: 296e7723ea29b55e18b4bee34c4c090e8f173d404b6e94ae067699d848f0c8f5
+- canonicalization: yaml_sorted_keys_lf
+  description: WormID train/eval cohort split (lab-level, schema v2).
+  path: pre-registration/splits/wormid_train_eval.yaml
+  sha256: 2625fb29e07211c83e1b85c086cd4b6fa041f6c7b624bea39d5d4c099afb2a8b
+- canonicalization: github_commit_pin
+  commit_sha: 699d3ddb4c2d6a7dc2ac72c3574aee01673fc934
+  config_path: Metaworm/args/run_worm_swim_args.txt
+  config_sha256: bbc9fa9bdd08982cd6506a7148fbb70e321eb04ad774b026fe2a0d877cc2845b
+  dataset: baaiworm
+  description: BAAIWorm synthetic generator — GitHub commit pin (Zhao 2024).
+  repo: github.com/Jessie940611/BAAIWorm
+  sha256: bf5eeb35c73f3f6842559d82556e1ca2f95ffe3580ede6c5b0f5ed84367325c4
+- canonicalization: doi_manifest
+  dataset: flavell_2023
+  description: Atanas/Flavell-2023 corpus — Zenodo deposit (not DANDI).
+  doi: 10.5281/zenodo.8150515
+  sha256: dad038aefec789db8e5bf7b978e2ce1eab35b564fe569b6b05c3ac78c25f15f6
+- canonicalization: zenodo_subset
+  dataset: openworm_movement
+  description: Open Worm Movement Database — Zenodo subset (Javer 2018).
+  records:
+  - description: N2 Schafer Lab wild-type (Bristol, UK), 2010-01-26 — anchor
+    doi: 10.5281/zenodo.1031550
+    zenodo_record_id: '1031550'
+  - description: RB1883 W03B1.2(ok2433)IV mutant, 2010-04-28 — anchor
+    doi: 10.5281/zenodo.1033265
+    zenodo_record_id: '1033265'
+  sha256: da06ac357dbe8aa86098a6966cb0893c20772ff606519d6fb2173a77021876cc
+- canonicalization: zenodo_subset
+  dataset: wormbehavior_db
+  description: WormBehavior Database — Zenodo subset (Yemini/Brown 2013).
+  records:
+  - description: N2 Schafer Lab wild-type (Bristol, UK), 2010-01-26 — anchor
+    doi: 10.5281/zenodo.1031550
+    zenodo_record_id: '1031550'
+  - description: MT1078 egl-13(n483)X mutant, 2010-07-16 — anchor
+    doi: 10.5281/zenodo.1029149
+    zenodo_record_id: '1029149'
+  sha256: 0608bf36050a45e33f937514e3ff8f3e690c6e554ff39a4e643966a4ab4dfa74
+- canonicalization: dandi_federation
+  dandisets:
+  - dandiset_id: '000472'
+    doi: 10.48324/dandi.000472/0.241009.1502
+    version: 0.241009.1502
+  - dandiset_id: '000541'
+    doi: 10.48324/dandi.000541/0.241009.1457
+    version: 0.241009.1457
+  - dandiset_id: '000565'
+    doi: 10.48324/dandi.000565/0.241009.1504
+    version: 0.241009.1504
+  - dandiset_id: 000692
+    doi: 10.48324/dandi.000692/0.240402.2118
+    version: 0.240402.2118
+  - dandiset_id: '000714'
+    doi: 10.48324/dandi.000714/0.241009.1516
+    version: 0.241009.1516
+  - dandiset_id: '000715'
+    doi: 10.48324/dandi.000715/0.241009.1514
+    version: 0.241009.1514
+  - dandiset_id: '000776'
+    doi: 10.48324/dandi.000776/0.241009.1509
+    version: 0.241009.1509
+  dataset: wormid
+  description: WormID corpus — federation of 7 DANDI dandisets (Sprague et al. 2025).
+  sha256: 58643d5cd86a942788de7d04d1ebc56c8d54b953e101c39ac2ed7b73a2812d5f
+git_sha_at_lock: da9991263c1bc643032bf31aaf33c93f61787ae1
+locked_at: '2026-05-21T13:35:34.347713Z'
+locked_by: SAMI RABINOVITCH
+schema_version: 2

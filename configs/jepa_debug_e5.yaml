@@ -1,0 +1,55 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 5 (2026-05-20): E4 recipe + warm-start heads ON.
+#
+# Experiment 4 (jepa_debug_e4.yaml) found the anti-collapse recipe with
+# the warm-start heads stripped (to isolate the collapse variable):
+# jepa 3194 -> 23, std_mean -> 0.36, std_min -> 0.17. The frozen
+# headline.yaml has the four pre-registered warm-start heads enabled
+# (eigenworm, graph_prior, neural, behavioral) — they were not part of
+# E1-E4. The heads apply auxiliary losses to the online latent and
+# could re-destabilise the representation.
+#
+# E5 is the de-risk run: E4 config + warm_start all ON. One axis
+# changes. If std stays healthy (~0.3+) and jepa keeps dropping, the
+# recipe survives the heads and the full 3-seed headline sweep is safe.
+# If std collapses again, the heads' loss weights need tuning before
+# the headline runs.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: true
+    graph_prior: true
+    neural: true
+    behavioral: true
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 25.0
+  covariance_reg_weight: 0.2
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

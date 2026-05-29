@@ -1,0 +1,61 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: lint + typecheck + tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    env:
+      UV_CACHE_DIR: ~/.cache/uv
+      # actions/cache has no major past v4; force its bundled JS action
+      # onto Node 24 ahead of the 2026-06-02 runner cutover.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache uv downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Install project (editable)
+        run: uv pip install -e .
+
+      - name: Ruff lint
+        run: uv run ruff check src/ tests/
+
+      - name: Pyright typecheck
+        run: uv run pyright src/
+
+      - name: Pytest (skip heavy V-JEPA smokes)
+        run: uv run pytest tests/ -x -q
+
+      - name: Verify pre-registration manifest
+        run: uv run wormjepa preregister --verify

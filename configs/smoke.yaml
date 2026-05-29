@@ -1,0 +1,6 @@
+# Smoke config: the minimum valid WormJEPAConfig.
+#
+# Used by Story 1.8's smoke test to prove the CLI loads + validates a config,
+# generates a run-id, and writes a contract-compliant results/<run-id>/ directory
+# end-to-end on CPU in under 5 seconds. No training happens.
+schema_version: 1

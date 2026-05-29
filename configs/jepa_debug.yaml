@@ -1,0 +1,59 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 1 (2026-05-20): does the MINIMAL pure-JEPA loop collapse?
+#
+# Everything that is not core JEPA is stripped, so a collapse here points
+# at the core loop itself rather than an interacting component:
+#   - warm_start heads: all OFF
+#   - variance_reg_weight: 0 (no VicReg regularizer)
+#   - standardize_target: false (standard I-JEPA / V-JEPA — no per-batch
+#     target standardization; EMA + stop-grad is the only mechanism)
+#   - predictor_layers: 6 (a real predictor; the default 1 is far too
+#     shallow for masked prediction)
+#   - warmup_steps: 50 (linear lr warmup — stabilise the cold start)
+#   - frozen_target: false (EMA target — the standard JEPA posture)
+#   - single loader (baaiworm realistic-worm renderer) — fewer variables
+#   - n_steps 500 — short; just enough to read the std trajectory
+#
+# Decision rule: run this, watch log.jsonl `extra.latent.std_mean`.
+#   - std stabilises (levels off > ~0.01) -> core loop is sound; add
+#     components back one at a time to find the collapse culprit.
+#   - std collapses to ~0 -> the core JEPA loop itself is broken; the
+#     problem is deeper than any single component.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: false
+    graph_prior: false
+    neural: false
+    behavioral: false
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 0.0
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

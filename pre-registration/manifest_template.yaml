@@ -1,0 +1,61 @@
+# Frozen-artifact enumeration for `wormjepa preregister` (schema v2).
+#
+# This template lists every artifact to be frozen. `wormjepa preregister`
+# reads it, dispatches on canonicalization, and writes MANIFEST.lock.
+# For schema-v2 canonicalizations (dandi_federation, zenodo_subset,
+# github_commit_pin) the substance lives in the SPEC module under
+# `wormjepa.data.sources.<dataset>`; this template only enumerates
+# which datasets and what canonicalization each uses.
+#
+# Modifying this template after lock means a re-lock — the CHANGELOG
+# `### Frozen-artifact changes` enforcement applies.
+
+artifacts:
+  # File artifacts (frozen Phase 0 commitments)
+  - path: pre-registration/PRE-REGISTRATION.md
+    canonicalization: text_lf
+    description: Methodological commitments document.
+
+  - path: pre-registration/configs/headline.yaml
+    canonicalization: yaml_sorted_keys_lf
+    description: Locked headline-run configuration.
+
+  - path: pre-registration/splits/wormid_train_eval.yaml
+    canonicalization: yaml_sorted_keys_lf
+    description: WormID train/eval cohort split (lab-level, schema v2).
+
+  - path: pre-registration/probes/neural_decoding.py
+    canonicalization: python_ast_normalized
+    description: Frozen neural-decoding probe code.
+
+  - path: pre-registration/neuron_subset.yaml
+    canonicalization: yaml_sorted_keys_lf
+    description: Pre-committed non-trivial neuron subset.
+
+  - path: pre-registration/baseline_features/tierpsy_pin.yaml
+    canonicalization: yaml_sorted_keys_lf
+    description: Tierpsy version + feature list pinning.
+
+  # Dataset artifacts — schema-v2 substance lives in
+  # `wormjepa.data.sources.<dataset>.SPEC` and is loaded at lock time.
+
+  - dataset: wormid
+    canonicalization: dandi_federation
+    description: WormID corpus — federation of 7 DANDI dandisets (Sprague et al. 2025).
+
+  - dataset: flavell_2023
+    canonicalization: doi_manifest
+    doi: 10.5281/zenodo.8150515
+    description: Atanas/Flavell-2023 corpus — Zenodo deposit (not DANDI).
+
+  - dataset: wormbehavior_db
+    canonicalization: zenodo_subset
+    description: WormBehavior Database — Zenodo subset (Yemini/Brown 2013).
+
+  - dataset: openworm_movement
+    canonicalization: zenodo_subset
+    description: Open Worm Movement Database — Zenodo subset (Javer 2018).
+
+  - dataset: baaiworm
+    canonicalization: github_commit_pin
+    description: BAAIWorm synthetic generator — GitHub commit pin (Zhao 2024).

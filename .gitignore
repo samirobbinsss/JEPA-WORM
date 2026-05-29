@@ -1,0 +1,55 @@
+log.md
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.local
+
+# Internal / non-public workspace (kept local, excluded from the public repo).
+# BMM planning + implementation artifacts, AI-tooling skill trees, and
+# operational status notes. None of this is needed to build, test, or
+# reproduce the project — that lives in src/, tests/, configs/,
+# pre-registration/, and the public docs (README, REPRODUCE, CHANGELOG).
+_bmad/
+_bmad-output/
+.claude/
+.agents/
+AGENTS.md
+CLAUDE.md
+STATUS.md
+TROUBLESHOOTING.md
+LIT_WATCH.md
+
+# Python / uv
+.venv/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+.pyright_cache/
+
+# JEPA-WORM data and large run artifacts (per architecture)
+data/downloads/
+
+# Dev-loop run outputs — never committed. The reportable Phase 0
+# artifact lives at results/published/<phase0_headline_id>/, which is
+# explicitly carved back in below.
+results/*
+!results/published/
+!results/published/**
+# Even inside results/published/, exclude checkpoints + bootstrap
+# samples per architecture (too large for git).
+results/published/*/checkpoints/
+results/published/*/bootstrap_samples.parquet
+
+# Dev-loop fixtures (not for reportable runs, never committed)
+tests/fixtures/dev_local/
+
+# Dev-loop GUI cache (decoded clips, computed projections; never committed)
+scripts/dev/.gui_cache/
+
+# Eval-time encoder cache (disk-side cache of encoder forward pass keyed by
+# checkpoint SHA + eval-loader fingerprint; rebuilt on demand, never committed).
+.cache/

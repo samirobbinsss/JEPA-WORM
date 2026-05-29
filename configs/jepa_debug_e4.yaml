@@ -1,0 +1,53 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 4 (2026-05-20): rebalanced regularizer weights.
+#
+# Experiment 3 (jepa_debug_e3.yaml) beat collapse — std healthy ~0.78,
+# cov_offdiag capped ~270 (vs E2's runaway 1395) — but the jepa loss
+# stalled ~310 and drifted slightly up: the regularizers, variance_reg
+# in particular at weight 100, are too strong relative to the prediction
+# objective, so the encoder serves the reg geometry over predictability.
+#
+# One knob changes from E3: variance_reg_weight 100 -> 25 (VICReg's mu).
+# covariance_reg_weight stays 0.2 (E3 showed it working). Hypothesis: the
+# weaker variance pressure lets the predictor get traction — jepa loss
+# resumes dropping — while 25 is still enough to hold std off the floor.
+# Watch jepa drop AND std stay > ~0.1.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: false
+    graph_prior: false
+    neural: false
+    behavioral: false
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 25.0
+  covariance_reg_weight: 0.2
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8

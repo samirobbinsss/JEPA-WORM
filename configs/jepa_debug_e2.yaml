@@ -1,0 +1,53 @@
+# Headline-collapse research sandbox — NOT a frozen artifact.
+#
+# Experiment 2 (2026-05-20): bare pure-JEPA + variance regularizer.
+#
+# Experiment 1 (configs/jepa_debug.yaml) established that the core JEPA
+# loop is sound — bare pure-JEPA does not hard-collapse; std plateaus
+# ~0.021 and jepa loss keeps dropping. 0.021 is stable but low; the
+# variance regularizer should lift it toward a healthier ~0.3-1.0.
+#
+# Only one knob changes from Experiment 1: variance_reg_weight 0 -> 100.
+# E1's un-standardized jepa loss is O(100); the variance term is O(1);
+# weight 100 puts them in the same ballpark (the VICReg recipe weights
+# invariance and variance roughly equally). The relu(1 - std) hinge
+# cannot overshoot past std = 1. If std lifts toward ~1 while jepa keeps
+# dropping -> the regularizer works, tune from here. If jepa stalls or
+# std pins at 1 with no informative structure -> weight too high.
+
+schema_version: 1
+
+jepa:
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024
+  masking_ratio: 0.75
+  n_steps: 500
+  batch_size: 8
+  learning_rate: 0.0001
+  warmup_steps: 50
+  ema_decay: 0.996
+  seed: 42
+  predictor_layers: 6
+  predictor_heads: 8
+  standardize_target: false
+  warm_start:
+    eigenworm: false
+    graph_prior: false
+    neural: false
+    behavioral: false
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  pretrained_checkpoint_sha: null
+  online_init: vjepa
+  variance_reg_weight: 100.0
+
+dataset:
+  loaders:
+    - name: baaiworm
+      clip_frames: 16
+      image_size: 384
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49
+      n_neurons: 8
