@@ -1,5 +1,7 @@
 # JEPA-WORM
 
+[![CI](https://github.com/samirobbinsss/JEPA-WORM/actions/workflows/test.yml/badge.svg)](https://github.com/samirobbinsss/JEPA-WORM/actions/workflows/test.yml)
+
 **Phase 0**: a self-contained software milestone that validates the JEPA-WORM thesis on public *C. elegans* data alone, before any hardware or biological procurement.
 
 This codebase produces a numerical, pre-registered answer to one question:
