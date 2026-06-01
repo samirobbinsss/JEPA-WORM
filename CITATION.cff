@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use JEPA-WORM in your research, please cite it as below."
+title: "JEPA-WORM"
+abstract: "Phase 0: self-supervised vision-only world model for C. elegans, validated end-to-end on public data before any hardware procurement."
+authors:
+  - family-names: "Rabinovitch"
+    given-names: "Sami"
+repository-code: "https://github.com/samirobbinsss/JEPA-WORM"
+url: "https://github.com/samirobbinsss/JEPA-WORM"
+license: MIT
+date-released: "2026-05-29"
+keywords:
+  - C. elegans
+  - JEPA
+  - self-supervised learning
+  - world model
+  - computational neuroscience
+  - pre-registration

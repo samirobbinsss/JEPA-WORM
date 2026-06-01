@@ -47,4 +47,4 @@ Reproduction tolerance is the worm-level bootstrap CI of each reported number â€
 
 ## License
 
-See `data/SOURCES.md` for per-dataset licensing. Code license: TBD (Phase A public release).
+See `data/SOURCES.md` for per-dataset licensing. Code: MIT (see `LICENSE`). To cite this repository: see `CITATION.cff` (GitHub renders a "Cite this repository" button).
