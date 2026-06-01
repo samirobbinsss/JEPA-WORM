@@ -20,6 +20,7 @@ Idempotent — re-running overwrites the staged copies.
 from __future__ import annotations
 
 import shutil
+import sys
 
 from wormjepa.paths import project_root
 
@@ -39,6 +40,20 @@ def main() -> None:
     """Stage every research log into results/collapse-research/."""
     root = project_root()
     src_dir = root / "_bmad-output" / "implementation-artifacts" / "collapse-research-logs"
+    if not src_dir.is_dir():
+        print(
+            "stage_research_logs.py: required source dir not found.\n"
+            f"  expected: {src_dir}\n\n"
+            "This is an author-tooling dev script that depends on a local-only "
+            "workspace directory (`_bmad-output/implementation-artifacts/"
+            "collapse-research-logs/`) which is gitignored and therefore absent "
+            "from the public repository. Public users should consult REPRODUCE.md "
+            "for the supported collapse-study reproduction path; the raw per-step "
+            "research logs this script stages are not part of the public artifact "
+            "set.",
+            file=sys.stderr,
+        )
+        sys.exit(78)  # sysexits.h: EX_CONFIG
     dst_root = root / "results" / "collapse-research"
     dst_root.mkdir(parents=True, exist_ok=True)
 

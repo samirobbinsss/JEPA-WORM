@@ -579,6 +579,26 @@ def run() -> None:
     st.title("Phase 0 verdict dashboard")
     st.caption(f"Read-only inspector for `metrics_eval.json` + `STATUS.md` under `{results_root}`.")
 
+    # Guard: STATUS.md is gitignored / local-only (generated at runtime by
+    # `wormjepa eval` as an additive merge). On a fresh public-repo clone
+    # the file is absent and Panel 3 / parse_status_gate_verdicts would
+    # silently render an empty table. Surface an actionable explanation
+    # once at app load instead.
+    status_path = _PROJECT_ROOT / "STATUS.md"
+    if not status_path.is_file():
+        st.error(
+            "This is an author-tooling dev dashboard that depends on a "
+            "local-only `STATUS.md` at the project root — the file is "
+            "gitignored (generated at runtime by `wormjepa eval` as an "
+            "additive merge) and therefore absent from a fresh public-repo "
+            "clone. For public users, the gate-verdict layout and the "
+            "recomputed outcome semantics are documented in `REPRODUCE.md` "
+            "and the inline docstrings of `wormjepa.eval.gates`; produce "
+            "a `STATUS.md` locally via `wormjepa eval --run <id>` to "
+            "engage this dashboard."
+        )
+        st.stop()
+
     run_ids = list_runs_with_metrics_eval(results_root)
     if not run_ids:
         st.warning(
