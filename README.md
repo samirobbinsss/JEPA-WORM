@@ -33,7 +33,11 @@ uv run wormjepa --help
 uv run wormjepa --version
 ```
 
-Subcommands `run`, `eval`, `report`, `preregister` are scaffolded but not yet wired end-to-end. See `epics.md` for the current implementation roadmap.
+Subcommands: `run` (train), `eval` (gate-evaluation orchestrator), `report` (CI-aware comparison against published results), `preregister` (verify the SHA-locked manifest), and `fetch` (download pre-registered Zenodo anchors). See `REPRODUCE.md` for the canonical reproduction sequence.
+
+### Notes
+
+On macOS, `wormjepa` prints an `objc[]: Class AVF... is implemented in both .../av/.../libavdevice.dylib and .../cv2/.../libavdevice.dylib` warning at startup. Both `av` and `opencv-python` ship their own copy of libavdevice; the warning is cosmetic and does not affect correctness.
 
 ## Tooling
 
