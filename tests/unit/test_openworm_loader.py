@@ -14,8 +14,12 @@ from wormjepa import DatasetIntegrityError
 from wormjepa.data import DatasetSample, SourceDataset
 from wormjepa.data.loaders.openworm_movement import OpenWormMovementLoader
 
-# Anchor record ids from src/wormjepa/data/sources/openworm_movement.py.
-ANCHOR_RECORD_IDS = ("1031550", "1033265")
+# Record ids pinned in src/wormjepa/data/sources/openworm_movement.py: the
+# N2 anchor 1031550 plus a stratified N2 record. The loader filters local
+# record dirs against SPEC membership, so both ids must be present in SPEC.
+# (The former mutant anchor 1033265 was dropped in Story 9.6 — video-less,
+# silently loader-skipped — so it can no longer stand in as a second record.)
+PINNED_RECORD_IDS = ("1031550", "1033159")
 
 
 def _stable_seed(path: Path) -> int:
@@ -66,7 +70,7 @@ def test_loader_raises_when_no_record_subdirs(tmp_path: Path) -> None:
 
 
 def test_loader_yields_correct_shape_and_pose(tmp_path: Path) -> None:
-    root = _materialise_root(tmp_path, ANCHOR_RECORD_IDS)
+    root = _materialise_root(tmp_path, PINNED_RECORD_IDS)
     loader = OpenWormMovementLoader(root, clip_frames=4, image_size=(8, 8))
     samples = list(loader)
     assert len(samples) == 8  # 2 records * 1 file * 4 clips
@@ -87,7 +91,7 @@ def test_loader_yields_correct_shape_and_pose(tmp_path: Path) -> None:
 def test_pose_none_when_skeleton_absent(tmp_path: Path) -> None:
     root = tmp_path / "no_pose"
     root.mkdir()
-    rid = ANCHOR_RECORD_IDS[0]
+    rid = PINNED_RECORD_IDS[0]
     _write_minimal_schafer_h5(root / rid / "no_pose.hdf5", n_frames=8, with_pose=False)
     loader = OpenWormMovementLoader(root, clip_frames=4, image_size=(4, 4))
     samples = list(loader)
@@ -96,7 +100,7 @@ def test_pose_none_when_skeleton_absent(tmp_path: Path) -> None:
 
 
 def test_iteration_is_deterministic(tmp_path: Path) -> None:
-    root = _materialise_root(tmp_path, ANCHOR_RECORD_IDS)
+    root = _materialise_root(tmp_path, PINNED_RECORD_IDS)
     loader = OpenWormMovementLoader(root, clip_frames=4, image_size=(4, 4))
     first = [s.worm_id for s in loader]
     second = [s.worm_id for s in loader]

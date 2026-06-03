@@ -43,10 +43,307 @@ artifacts:
   - description: N2 Schafer Lab wild-type (Bristol, UK), 2010-01-26 — anchor
     doi: 10.5281/zenodo.1031550
     zenodo_record_id: '1031550'
-  - description: RB1883 W03B1.2(ok2433)IV mutant, 2010-04-28 — anchor
-    doi: 10.5281/zenodo.1033265
-    zenodo_record_id: '1033265'
-  sha256: da06ac357dbe8aa86098a6966cb0893c20772ff606519d6fb2173a77021876cc
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1033159
+    zenodo_record_id: '1033159'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1033163
+    zenodo_record_id: '1033163'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032123
+    zenodo_record_id: '1032123'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1031879
+    zenodo_record_id: '1031879'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032500
+    zenodo_record_id: '1032500'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032327
+    zenodo_record_id: '1032327'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032915
+    zenodo_record_id: '1032915'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032803
+    zenodo_record_id: '1032803'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032935
+    zenodo_record_id: '1032935'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032933
+    zenodo_record_id: '1032933'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032645
+    zenodo_record_id: '1032645'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032975
+    zenodo_record_id: '1032975'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032773
+    zenodo_record_id: '1032773'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032885
+    zenodo_record_id: '1032885'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032795
+    zenodo_record_id: '1032795'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032907
+    zenodo_record_id: '1032907'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032851
+    zenodo_record_id: '1032851'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032941
+    zenodo_record_id: '1032941'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032133
+    zenodo_record_id: '1032133'
+  - description: N2 wild-type — story 9-6 extension
+    doi: 10.5281/zenodo.1032333
+    zenodo_record_id: '1032333'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1019906
+    zenodo_record_id: '1019906'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1023309
+    zenodo_record_id: '1023309'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1019876
+    zenodo_record_id: '1019876'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1015174
+    zenodo_record_id: '1015174'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1014707
+    zenodo_record_id: '1014707'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1014606
+    zenodo_record_id: '1014606'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1023734
+    zenodo_record_id: '1023734'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1026577
+    zenodo_record_id: '1026577'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1019070
+    zenodo_record_id: '1019070'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1018872
+    zenodo_record_id: '1018872'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1017633
+    zenodo_record_id: '1017633'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1031696
+    zenodo_record_id: '1031696'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1030934
+    zenodo_record_id: '1030934'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1026619
+    zenodo_record_id: '1026619'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1023621
+    zenodo_record_id: '1023621'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1018964
+    zenodo_record_id: '1018964'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1030056
+    zenodo_record_id: '1030056'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1026310
+    zenodo_record_id: '1026310'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1033763
+    zenodo_record_id: '1033763'
+  - description: CB120 unc-4(e120) — story 9-6 extension
+    doi: 10.5281/zenodo.1020583
+    zenodo_record_id: '1020583'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1016521
+    zenodo_record_id: '1016521'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1014924
+    zenodo_record_id: '1014924'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1011645
+    zenodo_record_id: '1011645'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1014865
+    zenodo_record_id: '1014865'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1017370
+    zenodo_record_id: '1017370'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018420
+    zenodo_record_id: '1018420'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018009
+    zenodo_record_id: '1018009'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1019283
+    zenodo_record_id: '1019283'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1016952
+    zenodo_record_id: '1016952'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1016599
+    zenodo_record_id: '1016599'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018207
+    zenodo_record_id: '1018207'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1015857
+    zenodo_record_id: '1015857'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018367
+    zenodo_record_id: '1018367'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1016845
+    zenodo_record_id: '1016845'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1017572
+    zenodo_record_id: '1017572'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018129
+    zenodo_record_id: '1018129'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1017645
+    zenodo_record_id: '1017645'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018422
+    zenodo_record_id: '1018422'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1018199
+    zenodo_record_id: '1018199'
+  - description: ED3054 C. briggsae wild isolate — story 9-6 extension
+    doi: 10.5281/zenodo.1011989
+    zenodo_record_id: '1011989'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1020621
+    zenodo_record_id: '1020621'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1005780
+    zenodo_record_id: '1005780'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1013246
+    zenodo_record_id: '1013246'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1019793
+    zenodo_record_id: '1019793'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1015466
+    zenodo_record_id: '1015466'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1016984
+    zenodo_record_id: '1016984'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1018671
+    zenodo_record_id: '1018671'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1020653
+    zenodo_record_id: '1020653'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1029930
+    zenodo_record_id: '1029930'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1021495
+    zenodo_record_id: '1021495'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1023173
+    zenodo_record_id: '1023173'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1025415
+    zenodo_record_id: '1025415'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1027687
+    zenodo_record_id: '1027687'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1023133
+    zenodo_record_id: '1023133'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1013083
+    zenodo_record_id: '1013083'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1011852
+    zenodo_record_id: '1011852'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1011796
+    zenodo_record_id: '1011796'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1014891
+    zenodo_record_id: '1014891'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1011957
+    zenodo_record_id: '1011957'
+  - description: RB1883 W03B1.2(ok2433)IV — story 9-6 extension
+    doi: 10.5281/zenodo.1014152
+    zenodo_record_id: '1014152'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1025567
+    zenodo_record_id: '1025567'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1021337
+    zenodo_record_id: '1021337'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1028766
+    zenodo_record_id: '1028766'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1021391
+    zenodo_record_id: '1021391'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1027626
+    zenodo_record_id: '1027626'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1018595
+    zenodo_record_id: '1018595'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1026589
+    zenodo_record_id: '1026589'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1024562
+    zenodo_record_id: '1024562'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1025080
+    zenodo_record_id: '1025080'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1027624
+    zenodo_record_id: '1027624'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1029252
+    zenodo_record_id: '1029252'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1031230
+    zenodo_record_id: '1031230'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1025827
+    zenodo_record_id: '1025827'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1028719
+    zenodo_record_id: '1028719'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1028172
+    zenodo_record_id: '1028172'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1029745
+    zenodo_record_id: '1029745'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1027599
+    zenodo_record_id: '1027599'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1013222
+    zenodo_record_id: '1013222'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1025465
+    zenodo_record_id: '1025465'
+  - description: MT1078 egl-13(n483)X — story 9-6 extension
+    doi: 10.5281/zenodo.1008463
+    zenodo_record_id: '1008463'
+  sha256: 7b27a5580d37a23c74c526e63a9db396a87143657201def0bc1b379701e0c747
 - canonicalization: zenodo_subset
   dataset: wormbehavior_db
   description: WormBehavior Database — Zenodo subset (Yemini/Brown 2013).
@@ -57,7 +354,307 @@ artifacts:
   - description: MT1078 egl-13(n483)X mutant, 2010-07-16 — anchor
     doi: 10.5281/zenodo.1029149
     zenodo_record_id: '1029149'
-  sha256: 0608bf36050a45e33f937514e3ff8f3e690c6e554ff39a4e643966a4ab4dfa74
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1031915
+    zenodo_record_id: '1031915'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032583
+    zenodo_record_id: '1032583'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1031845
+    zenodo_record_id: '1031845'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032039
+    zenodo_record_id: '1032039'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032351
+    zenodo_record_id: '1032351'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032267
+    zenodo_record_id: '1032267'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032187
+    zenodo_record_id: '1032187'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1033043
+    zenodo_record_id: '1033043'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032397
+    zenodo_record_id: '1032397'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1031859
+    zenodo_record_id: '1031859'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1031626
+    zenodo_record_id: '1031626'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032667
+    zenodo_record_id: '1032667'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032899
+    zenodo_record_id: '1032899'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032911
+    zenodo_record_id: '1032911'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032739
+    zenodo_record_id: '1032739'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032733
+    zenodo_record_id: '1032733'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1032486
+    zenodo_record_id: '1032486'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1011381
+    zenodo_record_id: '1011381'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1015022
+    zenodo_record_id: '1015022'
+  - description: N2 wild-type — story 9-5 extension
+    doi: 10.5281/zenodo.1033115
+    zenodo_record_id: '1033115'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192725
+    zenodo_record_id: '1192725'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201958
+    zenodo_record_id: '1201958'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201922
+    zenodo_record_id: '1201922'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192973
+    zenodo_record_id: '1192973'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201785
+    zenodo_record_id: '1201785'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201938
+    zenodo_record_id: '1201938'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192898
+    zenodo_record_id: '1192898'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1200505
+    zenodo_record_id: '1200505'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1189908
+    zenodo_record_id: '1189908'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192693
+    zenodo_record_id: '1192693'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192947
+    zenodo_record_id: '1192947'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201844
+    zenodo_record_id: '1201844'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1203373
+    zenodo_record_id: '1203373'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192961
+    zenodo_record_id: '1192961'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1202028
+    zenodo_record_id: '1202028'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201944
+    zenodo_record_id: '1201944'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1191658
+    zenodo_record_id: '1191658'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1201776
+    zenodo_record_id: '1201776'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1192782
+    zenodo_record_id: '1192782'
+  - description: CB1112 cat-2(e1112) — story 9-5 extension
+    doi: 10.5281/zenodo.1190130
+    zenodo_record_id: '1190130'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1021469
+    zenodo_record_id: '1021469'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1029192
+    zenodo_record_id: '1029192'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1027263
+    zenodo_record_id: '1027263'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1023820
+    zenodo_record_id: '1023820'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1028783
+    zenodo_record_id: '1028783'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1030513
+    zenodo_record_id: '1030513'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1025364
+    zenodo_record_id: '1025364'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1025461
+    zenodo_record_id: '1025461'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1022956
+    zenodo_record_id: '1022956'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1028337
+    zenodo_record_id: '1028337'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1030110
+    zenodo_record_id: '1030110'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1027711
+    zenodo_record_id: '1027711'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1031586
+    zenodo_record_id: '1031586'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1029015
+    zenodo_record_id: '1029015'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1015234
+    zenodo_record_id: '1015234'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1013495
+    zenodo_record_id: '1013495'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1020789
+    zenodo_record_id: '1020789'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1025877
+    zenodo_record_id: '1025877'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1026445
+    zenodo_record_id: '1026445'
+  - description: MT2611 unc-8(n491n1192) — story 9-5 extension
+    doi: 10.5281/zenodo.1025266
+    zenodo_record_id: '1025266'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1033913
+    zenodo_record_id: '1033913'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031552
+    zenodo_record_id: '1031552'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031528
+    zenodo_record_id: '1031528'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031632
+    zenodo_record_id: '1031632'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1030361
+    zenodo_record_id: '1030361'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1018049
+    zenodo_record_id: '1018049'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1029876
+    zenodo_record_id: '1029876'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031404
+    zenodo_record_id: '1031404'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031300
+    zenodo_record_id: '1031300'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031682
+    zenodo_record_id: '1031682'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1022804
+    zenodo_record_id: '1022804'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1025437
+    zenodo_record_id: '1025437'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1022179
+    zenodo_record_id: '1022179'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1030699
+    zenodo_record_id: '1030699'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031432
+    zenodo_record_id: '1031432'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1029250
+    zenodo_record_id: '1029250'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1029575
+    zenodo_record_id: '1029575'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1029055
+    zenodo_record_id: '1029055'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1031056
+    zenodo_record_id: '1031056'
+  - description: RB557 asic-2(ok289) — story 9-5 extension
+    doi: 10.5281/zenodo.1028485
+    zenodo_record_id: '1028485'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1032005
+    zenodo_record_id: '1032005'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1031000
+    zenodo_record_id: '1031000'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1032407
+    zenodo_record_id: '1032407'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1032233
+    zenodo_record_id: '1032233'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1032151
+    zenodo_record_id: '1032151'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1032107
+    zenodo_record_id: '1032107'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1021726
+    zenodo_record_id: '1021726'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1022862
+    zenodo_record_id: '1022862'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1012100
+    zenodo_record_id: '1012100'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1018201
+    zenodo_record_id: '1018201'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1013164
+    zenodo_record_id: '1013164'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1020469
+    zenodo_record_id: '1020469'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1025290
+    zenodo_record_id: '1025290'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1018245
+    zenodo_record_id: '1018245'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1022412
+    zenodo_record_id: '1022412'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1019359
+    zenodo_record_id: '1019359'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1015543
+    zenodo_record_id: '1015543'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1026711
+    zenodo_record_id: '1026711'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1024784
+    zenodo_record_id: '1024784'
+  - description: NL1137 gpa-5(pk376) — story 9-5 extension
+    doi: 10.5281/zenodo.1018643
+    zenodo_record_id: '1018643'
+  sha256: 394c971f539b50df6dceb12acc84e6ec84884fa8c4410a816dc66966313ecbe8
 - canonicalization: dandi_federation
   dandisets:
   - dandiset_id: '000472'
@@ -84,7 +681,7 @@ artifacts:
   dataset: wormid
   description: WormID corpus — federation of 7 DANDI dandisets (Sprague et al. 2025).
   sha256: 58643d5cd86a942788de7d04d1ebc56c8d54b953e101c39ac2ed7b73a2812d5f
-git_sha_at_lock: da9991263c1bc643032bf31aaf33c93f61787ae1
-locked_at: '2026-05-21T13:35:34.347713Z'
+git_sha_at_lock: 29e74d69251f0dfef796abdaa4c41acbe8173f90
+locked_at: '2026-06-03T16:20:20.929368Z'
 locked_by: SAMI RABINOVITCH
 schema_version: 2
