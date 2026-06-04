@@ -54,3 +54,15 @@ SPEC = DatasetSource(
         "Zenodo hosts the canonical archive; no project-side redistribution."
     ),
 )
+
+# Materialization status (Story 9.7, gamma-pattern deferral). Deliberately a
+# module-level string, not a DatasetSource field: the frozen+slots dataclass
+# has no slot for it, and the ``doi_manifest`` canonicalization hashes ``doi``
+# only, so this annotation does NOT shift the MANIFEST.lock SHA. The Phase 0
+# deferral is already enforced (flavell removed from
+# ``configs/headline.yaml`` ``dataset.loaders`` on 2026-05-18) and documented
+# (``PRE-REGISTRATION.md`` deviation block); this constant makes the per-SPEC
+# status programmatically discoverable. Promote to a real field at Epic 9
+# close if a second dataset ever needs the same marking (WormID defers via
+# ``splits/wormid_train_eval.yaml`` blocks, not a SPEC field).
+MATERIALIZATION_STATUS = "phase-0-growth-deferred"
