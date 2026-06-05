@@ -21,6 +21,7 @@ compatibility (their removal is its own follow-up).
 
 from __future__ import annotations
 
+import importlib
 import logging
 import sys
 from pathlib import Path
@@ -73,6 +74,87 @@ def fetch_zenodo_anchors() -> None:
         typer.echo(f"fetching zenodo:{record_id} -> {dest}")
         paths = download_zenodo_record(record_id, dest)
         typer.echo(f"  {record_id}: {len(paths)} files at {dest}")
+
+
+# --dataset choice -> SPEC module exposing a ``records`` list of ZenodoRecordPin.
+_ZENODO_SUBSET_SPECS: dict[str, str] = {
+    "wormbehavior_db": "wormjepa.data.sources.wormbehavior_db",
+    "openworm_movement": "wormjepa.data.sources.openworm_movement",
+}
+
+
+@fetch_app.command(
+    "zenodo-subset",
+    help=(
+        "Fetch the full pre-committed Zenodo subset — every record in the "
+        "wormbehavior_db / openworm_movement SPEC (~45 GB for both) — into "
+        "data/downloads/<dataset>/<record_id>/. Idempotent: records already "
+        "on disk at the expected size are skipped, so a re-run resumes. "
+        "Per-record failures are logged and the run continues; a non-zero "
+        "exit then reports how many failed."
+    ),
+)
+def fetch_zenodo_subset(
+    dataset: Annotated[
+        str,
+        typer.Option(
+            "--dataset",
+            help=(
+                "Which subset to fetch: 'wormbehavior_db', "
+                "'openworm_movement', or 'both' (default)."
+            ),
+        ),
+    ] = "both",
+    max_records: Annotated[
+        int,
+        typer.Option(
+            "--max-records",
+            help=(
+                "Cap records fetched per dataset (0 = all). Use a small "
+                "value for a cheap connectivity check before the full pull."
+            ),
+        ),
+    ] = 0,
+) -> None:
+    """Fetch every record in the WBDB / OWMD Zenodo subset SPECs."""
+    if dataset == "both":
+        targets = list(_ZENODO_SUBSET_SPECS)
+    elif dataset in _ZENODO_SUBSET_SPECS:
+        targets = [dataset]
+    else:
+        msg = (
+            f"unknown --dataset {dataset!r}; choose 'wormbehavior_db', "
+            f"'openworm_movement', or 'both'"
+        )
+        raise WormJEPAError(msg)
+
+    repo_root = project_root()
+    failures: list[tuple[str, str, str]] = []  # (dataset, record_id, error)
+    for ds_name in targets:
+        spec = importlib.import_module(_ZENODO_SUBSET_SPECS[ds_name]).SPEC
+        records = list(spec.records)
+        if max_records > 0:
+            records = records[:max_records]
+        typer.echo(f"=== {ds_name}: {len(records)} records ===")
+        for i, pin in enumerate(records, start=1):
+            rid = pin.zenodo_record_id
+            dest = repo_root / "data" / "downloads" / ds_name / rid
+            typer.echo(f"[{ds_name} {i}/{len(records)}] zenodo:{rid} -> {dest}")
+            try:
+                paths = download_zenodo_record(rid, dest)
+            except WormJEPAError as exc:
+                logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
+                failures.append((ds_name, rid, str(exc)))
+                continue
+            typer.echo(f"  {rid}: {len(paths)} files")
+
+    if failures:
+        typer.echo(f"\n{len(failures)} record(s) FAILED:")
+        for ds_name, rid, err in failures:
+            typer.echo(f"  {ds_name}/{rid}: {err}")
+        msg = f"zenodo-subset fetch: {len(failures)} record(s) failed"
+        raise WormJEPAError(msg)
+    typer.echo("\nall records present.")
 
 
 @fetch_app.command(
