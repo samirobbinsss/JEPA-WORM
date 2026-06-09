@@ -1,0 +1,182 @@
+# Locked headline-run configuration (Story 4.8; substantively populated at
+# Story 8.11b).
+#
+# This file is the *frozen* version of the headline config. The working-tree
+# copy at configs/headline.yaml must match this byte-for-byte (the lock check
+# enforces SHA equality post-canonicalization).
+#
+# Story 8.11b context — closes the Story 7.9 carried debt:
+#
+# Story 7.9 shipped this file as a Kalman-baseline stub with no `jepa:` section
+# because Epic 5's JEPA training loop was being wired in parallel. Pre-flight
+# for Story 8.11 (three-seed headline sweep) on 2026-05-18 surfaced that the
+# stub blocked the headline run from launching, and that the
+# `WormJEPAEncoder.from_frozen` constructor that the architecture committed to
+# (frozen V-JEPA 2.1 transfer learning, per PRD §"Technical risks" and
+# architecture §"Frozen vs end-to-end") was never wired in. Story 8.11a landed
+# the frozen V-JEPA 2.1 loader; this commit (8.11b) substantively populates
+# the headline configuration on top of it.
+#
+# See _bmad-output/implementation-artifacts/phase0-vjepa21-debt-discovery-2026-05-18.md
+# for the full discovery audit trail.
+
+schema_version: 1
+
+jepa:
+  # Frozen V-JEPA 2.1 ViT-L/16 transfer-learning posture (PRD-committed).
+  # R3 upgrade (2026-05-18): bumped from ViT-B to ViT-L after remote A100
+  # compute became available, and n_steps + learning_rate raised to give the
+  # online-encoder fine-tune enough gradient signal to escape the trivial
+  # constant-latent attractor observed in the Story 8.11c ViT-B sweep
+  # (std_min ~ 0.0007 at 1000 steps). vjepa_variant is the authoritative
+  # weight selector; model_name is informational.
+  model_name: vjepa2_1_vit_large_384
+  img_size: 384
+  latent_dim: 1024  # ViT-L/16 embed_dim (vs 768 for ViT-B); runner sources
+                    # the actual dim from the wrapper's embed_dim in
+                    # frozen_target mode — this field is informational.
+  masking_ratio: 0.75
+  n_steps: 5000
+  # R3-followup (2026-05-20): batched training loop. The first headline
+  # run (2026-05-19, seed 42) collapsed — std_mean 0.069 -> 0.0035 over
+  # 74 steps — because the loop processed one clip per gradient step, so
+  # the F3 VicReg variance regularizer measured std across the 16 frames
+  # of a single clip instead of across distinct samples (an inert
+  # collapse guard). batch_size stacks distinct clips per step so
+  # variance_reg becomes a real cross-sample statistic. n_steps is now
+  # honoured via dataset epoching regardless of corpus size. Set to 8:
+  # ViT-L/16 at 384px (~4608 tokens) backprop activations are ~58 GB at
+  # B=32 — over the 20 GB RTX 4000 Ada VRAM on the run pod; B=8 fits and
+  # 8x16=128 cross-sample rows still make variance_reg meaningful. See
+  # training/loop.py and the 2026-05-20 CHANGELOG frozen-artifact entry.
+  batch_size: 8
+  learning_rate: 0.0001
+  ema_decay: 0.996  # EMA decay for the target encoder (V-JEPA 2 default).
+  seed: 42  # First of three pre-committed seeds (42, 1337, 8675309); the
+            # other two come via `wormjepa run --seed <s>` CLI override at
+            # sweep-launch time per PRE-REGISTRATION.md §"Three pre-committed seeds".
+  warm_start:
+    eigenworm: true
+    graph_prior: true
+    neural: true
+    behavioral: true
+  # R3-followup (2026-05-20): frozen_target reverted true -> false. A
+  # separate FROZEN V-JEPA target has no stable non-collapsed equilibrium
+  # — the predictor can satisfy a fixed foreign target degenerately, and
+  # eight collapse fixes (batching, target standardization, gate
+  # loosening, realistic data, online_init=vjepa, predictor positional
+  # encoding, cross-attention predictor) only ever got jepa loss to drop
+  # while latent std still collapsed. frozen_target=false makes the
+  # target an EMA copy of the online encoder — the standard I-JEPA /
+  # V-JEPA posture, where the EMA + stop-grad IS the anti-collapse
+  # mechanism. vjepa_variant stays set: the runner's EMA path still
+  # builds the online encoder from V-JEPA 2.1 weights (online_init).
+  frozen_target: false
+  vjepa_variant: vjepa2_1_vit_large_384
+  # SHA-256 of the V-JEPA 2.1 ViT-L distilled checkpoint
+  # (dl.fbaipublicfiles.com/vjepa2/vjepa2_1_vitl_dist_vitG_384.pt). To be
+  # observed on first download via the loader's warning path, then pinned
+  # here in a follow-up frozen-artifact entry once known. Left null for the
+  # initial R3 commit so the loader auto-downloads and logs the SHA without
+  # SHA-mismatch erroring.
+  pretrained_checkpoint_sha: null
+  # R3-followup reverted (2026-05-20): online encoder initialises from
+  # the V-JEPA 2.1 weights, NOT random. The earlier `random` choice (F1,
+  # 2026-05-19) was measured to be the root cause of the headline latent
+  # collapse: a random-init ViT-L, after the wrapper mean-pools its ~576
+  # spatial tokens, produces near-constant latents BY CONSTRUCTION
+  # (central-limit washout of unstructured tokens) — direct measurement:
+  # per-dim std 0.006 vs abs-mean 0.80, i.e. latents ~99% identical
+  # across distinct inputs, before any training. The predictor then sees
+  # a constant-output encoder and the jepa loss never leaves the
+  # predict-the-mean floor. A *trained* V-JEPA encoder's tokens carry
+  # input-dependent structure that survives mean-pooling. online==target
+  # at init is not fatal: with masking_ratio 0.75 the predictor still has
+  # the real masked-prediction task (standard I-JEPA / V-JEPA posture).
+  online_init: vjepa
+  # E4 recipe (2026-05-20): the systematic collapse study (E1-E4, see
+  # _bmad-output/implementation-artifacts/phase0-collapse-research-2026-05-20.md)
+  # found the first fully-healthy JEPA run at these settings — jepa loss
+  # 3194 -> 23, std_mean -> 0.36, std_min -> 0.17 (no dead dims),
+  # cov_offdiag controlled ~96. The recipe:
+  #   - predictor_layers 6 / predictor_heads 8: a real cross-attention
+  #     predictor (the default 1-layer was stuck at the predict-the-mean
+  #     floor).
+  #   - warmup_steps 50: linear lr warmup stabilises the cold start.
+  #   - standardize_target false: standard I-JEPA / V-JEPA do not
+  #     standardize the target; standardizing a collapsing EMA target
+  #     divides by a vanishing std.
+  #   - variance_reg_weight 25 (VicReg's mu) + covariance_reg_weight 0.2:
+  #     VicReg's variance + covariance terms. variance lifts per-dim std;
+  #     covariance decorrelates the dims. 50.0 (the prior value) over-
+  #     constrained the geometry and stalled the predictor.
+  predictor_layers: 6
+  predictor_heads: 8
+  warmup_steps: 50
+  standardize_target: false
+  variance_reg_weight: 25.0
+  covariance_reg_weight: 0.2
+  # Two-phase curriculum (E7/E8). The warm-start heads, co-trained from
+  # step 1, collapse the encoder at any head weight (E5/E6) — their
+  # predict-pose/neural objective fights JEPA's predict-the-target.
+  # warm_start_after_step trains the encoder pure-JEPA for the first
+  # 4000 steps, then freezes it and switches the heads on for the final
+  # 1000 — they warm-start by reading a stable representation, which a
+  # frozen encoder cannot collapse. head_learning_rate gives the heads
+  # their own optimizer param-group at 10x the encoder lr so they fit
+  # in the phase-2 budget. E8 verified the full recipe end-to-end:
+  # std held ~0.29 across the freeze, jepa loss 3201 -> 20.
+  warm_start_after_step: 4000
+  head_learning_rate: 0.001
+
+dataset:
+  # Headline dataset chain. baaiworm leads because the v0 JEPA loop's
+  # `loop.py` gates on `sample.pose is not None and sample.neural is not
+  # None`; only baaiworm and synthetic produce both today. The four real
+  # loaders exercise the FR8 contract path on real pre-registered bytes and
+  # are present in the chain so the run's compute provenance and
+  # results/<run-id>/log.jsonl reflect them; samples missing pose or neural
+  # are silently skipped by the loop (a follow-up story should loosen this
+  # gate so real samples drive their warm-start head only).
+  loaders:
+    - name: synthetic  # CONTROL (gate 4): BAAIWorm augmentation ablated (synthetic stand-in, dims matched)
+      clip_frames: 16
+      # R3-followup (2026-05-20): 384 to match jepa.img_size and the
+      # WormBehaviorDB / OpenWormMovementDB loaders. baaiworm previously
+      # defaulted to 64x64 (composition.py fallback when image_size unset),
+      # giving the ViT-L/16 encoder a 4x4 patch grid for baaiworm clips vs
+      # 24x24 for real video — an inconsistent input scale across the
+      # chain. Now uniform at 384.
+      image_size: 384
+      # R3-followup (2026-05-19): scaled from 50×20=1000 → 250×20=5000
+      # baaiworm samples so the loop's effective gradient-step count
+      # matches jepa.n_steps. Pre-bump: loop pulled 1000 baaiworm
+      # samples then exhausted real loaders (skipped on pose/neural
+      # None) and StopIteration'd before reaching 5000 nominal steps.
+      n_worms: 250
+      clips_per_worm: 20
+      n_keypoints: 49  # Full BAAIWorm keypoint count (49) per Zhao 2024.
+      n_neurons: 8
+    # WormID removed from the Phase 0 active chain on 2026-05-18 per the
+    # WormID content-shape discovery (HL + NP are NeuroPAL volumetric
+    # snapshots; calcium-imaging time-series in the bigger dandisets is
+    # neural data, not behavioral video, and FR17 forbids the vision-only
+    # encoder from consuming neural input). The wormid `dandi_federation`
+    # entry stays in MANIFEST.lock; only its **materialization** in the
+    # Phase 0 active run is deferred to Phase 0 Growth. See
+    # _bmad-output/implementation-artifacts/phase0-wormid-content-discovery-2026-05-18.md.
+    # flavell_2023 removed from the Phase 0 active chain on 2026-05-18 per
+    # Story 9.1 finding: its pinned Zenodo record (10.5281/zenodo.8150515)
+    # is CePNEM analysis artefacts + ANTSUN NN weights, not raw video; the
+    # actual raw paired video + neural corpus is DANDI 000776 (= WormID/SF),
+    # which is already γ-deferred. Resolved as redundant; deferred to Phase
+    # 0 Growth alongside WormID. See src/wormjepa/data/sources/flavell_2023.py
+    # docstring + _bmad-output/implementation-artifacts/phase0-flavell-redundancy-discovery-2026-05-18.md.
+    - name: wormbehavior_db
+      local_root: data/downloads/wormbehavior_db
+      clip_frames: 16
+      image_size: 384
+    - name: openworm_movement
+      local_root: data/downloads/openworm_movement
+      clip_frames: 16
+      image_size: 384
