@@ -1,13 +1,16 @@
 """``wormjepa fetch`` — first-class dataset / checkpoint fetch surface.
 
-Three subcommands, each a thin CLI wrapper around an existing module-level
+Four subcommands, each a thin CLI wrapper around an existing module-level
 fetch helper. Replaces the ad-hoc ``scripts/dev/fetch_*.py`` shims with a
 discoverable CLI surface while leaving the shims in place for backward
 compatibility (their removal is its own follow-up).
 
-  - ``wormjepa fetch zenodo-anchors``: pulls the 4 WBDB + OWMD anchor
+  - ``wormjepa fetch zenodo-anchors``: pulls the 3 WBDB + OWMD anchor
     records used by every Phase 0 headline sweep. Delegates to
     :func:`wormjepa.data.download.download_zenodo_record`.
+  - ``wormjepa fetch zenodo-subset``: pulls the full WBDB + OWMD
+    pre-committed 100-record subsets (~45 GB) by iterating each SPEC's
+    ``records``. Idempotent / resumable; per-record failures are isolated.
   - ``wormjepa fetch wormid-cohort <dandiset>``: pulls one WormID
     dandiset at the version pinned in ``wormjepa.data.sources.wormid``.
     Delegates to ``scripts/dev/fetch_wormid_cohort.py::main`` so the
@@ -39,11 +42,14 @@ logger = logging.getLogger(__name__)
 
 
 # (record_id, dest_dir relative to repo root) — same set the shim fetches.
+# OWMD carries a single anchor (the N2 record 1031550): its former mutant
+# anchor 1033265 was dropped in Story 9.6 (video-less off-food, silently
+# skipped by the loader). OWMD mutant + full-strain coverage now comes from
+# `fetch zenodo-subset`, not this minimal anchor set.
 _ZENODO_ANCHOR_JOBS: tuple[tuple[str, str], ...] = (
     ("1031550", "data/downloads/wormbehavior_db/1031550"),
     ("1029149", "data/downloads/wormbehavior_db/1029149"),
     ("1031550", "data/downloads/openworm_movement/1031550"),
-    ("1033265", "data/downloads/openworm_movement/1033265"),
 )
 
 
@@ -61,7 +67,7 @@ fetch_app = typer.Typer(
 @fetch_app.command(
     "zenodo-anchors",
     help=(
-        "Fetch the 4 WBDB + OWMD Zenodo anchor records into "
+        "Fetch the 3 WBDB + OWMD Zenodo anchor records into "
         "data/downloads/. Idempotent: files already present at the "
         "expected size are skipped."
     ),

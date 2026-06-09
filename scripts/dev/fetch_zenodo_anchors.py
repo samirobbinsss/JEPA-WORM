@@ -1,8 +1,10 @@
 """Idempotently fetch the WBDB + OWMD anchor records to local disk.
 
-Story 9.5 / 9.6 plans for 100 records per dataset; this script is the
-2-anchor baseline used by every Phase 0 headline sweep. Called from
-scripts/dev/remote_sweep.sh after the repo + venv are on the remote pod.
+Stories 9.5 / 9.6 grew each SPEC to 100 records; this script is the minimal
+anchor-record baseline (2 WBDB + 1 OWMD) used by every Phase 0 headline
+sweep. For the full 100-record subsets use ``wormjepa fetch zenodo-subset``.
+Called from scripts/dev/remote_sweep.sh after the repo + venv are on the
+remote pod.
 """
 # ruff: noqa: T201
 
@@ -17,7 +19,7 @@ JOBS: tuple[tuple[str, str], ...] = (
     ("1031550", "data/downloads/wormbehavior_db/1031550"),
     ("1029149", "data/downloads/wormbehavior_db/1029149"),
     ("1031550", "data/downloads/openworm_movement/1031550"),
-    ("1033265", "data/downloads/openworm_movement/1033265"),
+    # OWMD mutant anchor 1033265 dropped in Story 9.6 (video-less off-food).
 )
 
 
