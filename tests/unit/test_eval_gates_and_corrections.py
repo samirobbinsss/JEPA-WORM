@@ -39,7 +39,7 @@ def test_baaiworm_ablation_can_be_negative() -> None:
     with_aug = [0.10, 0.11, 0.09, 0.12]
     without = [0.15, 0.14, 0.16, 0.13]
     entry = baaiworm_ablation_entry(with_aug, without, [f"w{i}" for i in range(4)], n_bootstrap=200)
-    assert entry.name == "baaiworm_augmentation_delta_r2"
+    assert entry.name == "baaiworm_augmentation_ablation_delta_r2"
     assert entry.ci.point < 0.0  # without is better than with — reported either way
 
 
@@ -275,3 +275,152 @@ def test_nan_resilient() -> None:
     status = evaluate_gates(metrics)
     # NaN comparisons return False, so the gate "fires" rather than clearing — acceptable behavior.
     assert "neural_probe_partial_r2" in status.gates
+
+
+def test_baaiworm_ablation_entry_name_matches_pre_reg() -> None:
+    """The emitted key must match the STATUS/pre-reg row-5 identity exactly."""
+    entry = baaiworm_ablation_entry(
+        [0.20, 0.21, 0.19], [0.10, 0.11, 0.09], ["w0", "w1", "w2"], n_bootstrap=100
+    )
+    assert entry.name == "baaiworm_augmentation_ablation_delta_r2"
+    # Reported-only: positive or negative is fine, no threshold is applied.
+    assert entry.ci.point > 0.0
+
+
+# --- baaiworm-augmentation ablation wiring (control-arm plumbing) ---
+
+
+def _primary_metrics_with_partial_r2(point: float, lower: float, upper: float) -> MetricsOutput:
+    """A minimal single-run MetricsOutput carrying the primary partial-R² entry."""
+    return MetricsOutput(
+        run_id="primary_run",
+        entries=[
+            MetricEntry(
+                name="neural_probe_partial_r2",
+                producer="jepa",
+                ci=_ci(point, lower, upper),
+            ),
+        ],
+    )
+
+
+def _install_ablation_seams(
+    monkeypatch: pytest.MonkeyPatch,
+    primary: MetricsOutput,
+    *,
+    control_point: float | None,
+) -> None:
+    """Patch orchestrator seams so no training / cache build runs.
+
+    ``evaluate_run`` returns ``primary``; ``_build_eval_cache_and_run_partial_r2``
+    returns a control partial-R² entry (or ``(None, None)`` to simulate a
+    control that produced no usable partial-R²).
+    """
+    from wormjepa.eval import orchestrator
+
+    def _fake_evaluate_run(_run_dir: Path) -> tuple[MetricsOutput, object]:
+        return primary, evaluate_gates(primary)
+
+    def _fake_cache(_run_dir: Path) -> tuple[MetricEntry | None, None]:
+        if control_point is None:
+            return None, None
+        entry = MetricEntry(
+            name="neural_probe_partial_r2",
+            producer="jepa",
+            ci=_ci(control_point, control_point - 0.02, control_point + 0.02),
+        )
+        return entry, None
+
+    monkeypatch.setattr(orchestrator, "evaluate_run", _fake_evaluate_run)
+    monkeypatch.setattr(orchestrator, "_build_eval_cache_and_run_partial_r2", _fake_cache)
+
+
+def test_baaiworm_ablation_resolves_with_control(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A baaiworm control arm appends the reported ΔR² entry (with - without)."""
+    from wormjepa.eval import orchestrator
+
+    primary = _primary_metrics_with_partial_r2(0.30, 0.25, 0.35)
+    _install_ablation_seams(monkeypatch, primary, control_point=0.20)
+
+    metrics, status = orchestrator.evaluate_run_with_ablations(
+        Path("primary"), baaiworm_control_run_dir=Path("baaiworm_off")
+    )
+    entry = next(
+        (e for e in metrics.entries if e.name == "baaiworm_augmentation_ablation_delta_r2"), None
+    )
+    assert entry is not None, [e.name for e in metrics.entries]
+    # delta = primary - control = 0.30 - 0.20 = 0.10 (reported either sign).
+    assert entry.ci.point == pytest.approx(0.10, abs=1e-9)
+    # Reported-only: it is NOT a gate, never fires, and is not in any Holm
+    # family — re-running gate evaluation on the augmented metrics must not
+    # introduce a baaiworm verdict, and the gate set stays the four primary
+    # gates only.
+    assert "baaiworm_augmentation" not in status.gates
+    assert set(evaluate_gates(metrics).gates) == {
+        "kill_criterion",
+        "neural_probe_partial_r2",
+        "neural_prior_ablation",
+        "session_id_at_chance",
+    }
+
+
+def test_baaiworm_ablation_pending_without_control(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No baaiworm control → no fabricated entry; ablation stays pending."""
+    from wormjepa.eval import orchestrator
+
+    primary = _primary_metrics_with_partial_r2(0.30, 0.25, 0.35)
+    _install_ablation_seams(monkeypatch, primary, control_point=0.20)
+
+    metrics, _status = orchestrator.evaluate_run_with_ablations(Path("primary"))
+    assert all(e.name != "baaiworm_augmentation_ablation_delta_r2" for e in metrics.entries), [
+        e.name for e in metrics.entries
+    ]
+
+
+def test_baaiworm_ablation_pending_when_control_cache_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A control run that yields no partial-R² leaves the ablation unresolved."""
+    from wormjepa.eval import orchestrator
+
+    primary = _primary_metrics_with_partial_r2(0.30, 0.25, 0.35)
+    _install_ablation_seams(monkeypatch, primary, control_point=None)
+
+    metrics, _status = orchestrator.evaluate_run_with_ablations(
+        Path("primary"), baaiworm_control_run_dir=Path("baaiworm_off")
+    )
+    assert all(e.name != "baaiworm_augmentation_ablation_delta_r2" for e in metrics.entries)
+
+
+def test_both_ablation_arms_resolve_together(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Supplying both controls appends both ablation entries in one pass."""
+    from wormjepa.eval import orchestrator
+
+    primary = _primary_metrics_with_partial_r2(0.30, 0.25, 0.35)
+    _install_ablation_seams(monkeypatch, primary, control_point=0.20)
+
+    metrics, status = orchestrator.evaluate_run_with_ablations(
+        Path("primary"),
+        control_run_dir=Path("neural_off"),
+        baaiworm_control_run_dir=Path("baaiworm_off"),
+    )
+    names = {e.name for e in metrics.entries}
+    assert "neural_prior_ablation_delta_r2" in names
+    assert "baaiworm_augmentation_ablation_delta_r2" in names
+    # neural_prior IS a gate (threshold 0.02); it resolves to a verdict here.
+    assert status.gates.get("neural_prior_ablation") in {"cleared", "fired"}
+    # baaiworm remains reported-only — not a gate key.
+    assert "baaiworm_augmentation" not in status.gates
+
+
+def test_neural_prior_back_compat_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The retained evaluate_run_with_ablation wrapper still wires neural_prior only."""
+    from wormjepa.eval import orchestrator
+
+    primary = _primary_metrics_with_partial_r2(0.30, 0.25, 0.35)
+    _install_ablation_seams(monkeypatch, primary, control_point=0.20)
+
+    metrics, _status = orchestrator.evaluate_run_with_ablation(Path("primary"), Path("neural_off"))
+    names = {e.name for e in metrics.entries}
+    assert "neural_prior_ablation_delta_r2" in names
+    assert "baaiworm_augmentation_ablation_delta_r2" not in names

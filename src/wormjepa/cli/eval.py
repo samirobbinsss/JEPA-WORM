@@ -27,7 +27,7 @@ from wormjepa.eval.gates import GateStatus
 from wormjepa.eval.orchestrator import (
     SweepSummary,
     evaluate_run,
-    evaluate_run_with_ablation,
+    evaluate_run_with_ablations,
     evaluate_sweep,
 )
 from wormjepa.manifest.status_writer import update_status_additive, update_status_additive_sweep
@@ -62,6 +62,22 @@ def eval_command(
             ),
         ),
     ] = None,
+    baaiworm_control: Annotated[
+        str | None,
+        typer.Option(
+            "--baaiworm-control",
+            help=(
+                "Optional control run-id for the BAAIWorm-augmentation "
+                "ablation (PRD row 5, reported-only — no threshold). Must "
+                "have been trained with the BAAIWorm augmentation loader "
+                "removed. When set, eval emits a "
+                "baaiworm_augmentation_ablation_delta_r2 MetricEntry "
+                "(primary = WITH augmentation; control = WITHOUT). May be "
+                "combined with --control to resolve both ablations in one "
+                "invocation. Single-run mode only."
+            ),
+        ),
+    ] = None,
     json_out: Annotated[
         bool,
         typer.Option(
@@ -91,15 +107,34 @@ def eval_command(
             raise WormJEPAError(msg)
         run_dirs.append(d)
 
-    if control is not None:
+    if control is not None or baaiworm_control is not None:
         if len(run_dirs) != 1:
-            msg = "wormjepa eval: --control requires exactly one --run."
+            msg = "wormjepa eval: --control / --baaiworm-control require exactly one --run."
             raise WormJEPAError(msg)
-        control_dir = root / control
-        if not control_dir.is_dir():
-            msg = f"wormjepa eval --control {control!r}: not found at {control_dir}"
-            raise WormJEPAError(msg)
-        _emit_ablation(run_dirs[0], run_id[0], control_dir, control, json_out=json_out)
+        control_dir = None
+        if control is not None:
+            control_dir = root / control
+            if not control_dir.is_dir():
+                msg = f"wormjepa eval --control {control!r}: not found at {control_dir}"
+                raise WormJEPAError(msg)
+        baaiworm_control_dir = None
+        if baaiworm_control is not None:
+            baaiworm_control_dir = root / baaiworm_control
+            if not baaiworm_control_dir.is_dir():
+                msg = (
+                    f"wormjepa eval --baaiworm-control {baaiworm_control!r}: "
+                    f"not found at {baaiworm_control_dir}"
+                )
+                raise WormJEPAError(msg)
+        _emit_ablation(
+            run_dirs[0],
+            run_id[0],
+            control_dir,
+            control,
+            baaiworm_control_dir,
+            baaiworm_control,
+            json_out=json_out,
+        )
     elif len(run_dirs) == 1:
         _emit_single(run_dirs[0], run_id[0], json_out=json_out)
     else:
@@ -148,29 +183,46 @@ def _emit_ablation(
     primary_dir: object,
     primary_rid: str,
     control_dir: object,
-    control_rid: str,
+    control_rid: str | None,
+    baaiworm_control_dir: object = None,
+    baaiworm_control_rid: str | None = None,
     *,
     json_out: bool = False,
 ) -> None:
     from pathlib import Path
 
     assert isinstance(primary_dir, Path)
-    assert isinstance(control_dir, Path)
+    assert control_dir is None or isinstance(control_dir, Path)
+    assert baaiworm_control_dir is None or isinstance(baaiworm_control_dir, Path)
     logger.info(
         "eval ablation invoked",
-        extra={"primary": primary_rid, "control": control_rid},
+        extra={
+            "primary": primary_rid,
+            "control": control_rid,
+            "baaiworm_control": baaiworm_control_rid,
+        },
     )
-    metrics, gate_status = evaluate_run_with_ablation(primary_dir, control_dir)
+    metrics, gate_status = evaluate_run_with_ablations(
+        primary_dir,
+        control_run_dir=control_dir,
+        baaiworm_control_run_dir=baaiworm_control_dir,
+    )
 
     out_path = primary_dir / "metrics_eval.json"
     out_path.write_text(metrics.to_canonical_json(), encoding="utf-8")
     status_path = update_status_additive(primary_rid, gate_status)
 
+    run_ids = [primary_rid]
+    if control_rid is not None:
+        run_ids.append(control_rid)
+    if baaiworm_control_rid is not None:
+        run_ids.append(baaiworm_control_rid)
+
     if json_out:
         _emit_json(
             _build_json_payload(
                 mode="ablation",
-                run_ids=[primary_rid, control_rid],
+                run_ids=run_ids,
                 gate_status=gate_status,
                 metrics_paths=[str(out_path)],
             )
@@ -178,7 +230,10 @@ def _emit_ablation(
         return
 
     typer.echo(f"primary: {primary_rid}")
-    typer.echo(f"control: {control_rid}")
+    if control_rid is not None:
+        typer.echo(f"control: {control_rid}")
+    if baaiworm_control_rid is not None:
+        typer.echo(f"baaiworm_control: {baaiworm_control_rid}")
     typer.echo(f"outcome: {gate_status.outcome}")
     for gate, verdict in sorted(gate_status.gates.items()):
         typer.echo(f"  {gate}: {verdict}")

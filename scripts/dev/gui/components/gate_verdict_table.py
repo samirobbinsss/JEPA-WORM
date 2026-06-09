@@ -58,7 +58,7 @@ _GATE_DISPLAY: dict[str, tuple[str, str | None, str | None]] = {
     "motif_ari": ("Motif ARI vs Flavell", "motif_ari", "—"),
     "baaiworm_augmentation": (
         "BAAIWorm augmentation ΔR²",
-        "baaiworm_augmentation_delta_r2",
+        "baaiworm_augmentation_ablation_delta_r2",
         "—",
     ),
     "within_state_stratified": (

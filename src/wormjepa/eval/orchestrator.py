@@ -1087,40 +1087,21 @@ def _build_eval_cache_and_run_partial_r2(
         return None, None
 
 
-def evaluate_run_with_ablation(
-    primary_run_dir: Path, control_run_dir: Path
-) -> tuple[MetricsOutput, GateStatus]:
-    """Evaluate ``primary_run_dir`` and append a neural_prior_ablation
-    entry computed against ``control_run_dir``.
+def _wald_delta_entry(
+    primary_entry: MetricEntry,
+    control_entry: MetricEntry,
+    *,
+    name: str,
+    notes: str,
+) -> MetricEntry:
+    """Build a ΔR² MetricEntry from primary vs control partial-R² entries.
 
-    Phase 0 v0 ablation: delta_R² = primary.partial_R² - control.partial_R²
-    where the control run was trained without the warm_start.neural
-    contribution. The orchestrator does NOT verify that the control
-    run actually had warm_start.neural=False — that's a caller
-    contract (see ``wormjepa eval --primary X --control Y`` docs in
-    cli/eval.py).
-
-    The neural_prior_ablation gate's threshold is 0.02 (FR34); the
-    delta_R² entry's CI is computed as primary.r2 - control.r2 with
-    a Wald-approximated CI by summing variances (independence
-    assumption between the two runs' bootstrap distributions —
-    appropriate when seed and data shards differ).
+    delta_R² = primary.partial_R² - control.partial_R², with a CI derived
+    from a Wald-summed-variance normal approximation (independence assumed
+    between the two runs' bootstrap distributions — appropriate when the
+    runs differ by seed + shard). Shared by the neural-prior and BAAIWorm
+    ablation arms so both compute the delta identically.
     """
-    metrics, gate_status = evaluate_run(primary_run_dir)
-    control_entry, _ = _build_eval_cache_and_run_partial_r2(control_run_dir)
-    if control_entry is None:
-        logger.warning(
-            "evaluate_run_with_ablation: control run %s produced no partial_R² "
-            "entry; neural_prior_ablation gate stays pending.",
-            control_run_dir,
-        )
-        return metrics, gate_status
-
-    primary_entry = next((e for e in metrics.entries if e.name == "neural_probe_partial_r2"), None)
-    if primary_entry is None:
-        return metrics, gate_status
-
-    # delta_R² = primary - control. CI via Wald-summed variance (rough).
     p_point = float(primary_entry.ci.point)
     c_point = float(control_entry.ci.point)
     p_se = max(
@@ -1140,22 +1121,142 @@ def evaluate_run_with_ablation(
         n_samples=int(primary_entry.ci.n_samples),
         method="percentile",
     )
-    ablation_entry = MetricEntry(
-        name="neural_prior_ablation_delta_r2",
-        producer="jepa",
-        ci=delta_ci,
-        sub_entries=[],
-        notes=(
-            f"Phase 0 v0 ablation: delta_R² = primary.partial_R² ({p_point:.4f}) "
-            f"- control.partial_R² ({c_point:.4f}) = {delta:.4f}. "
-            f"control_run_dir={control_run_dir.name}. CI via Wald-summed-variance "
-            f"normal approximation (independence assumed between the two runs' "
-            f"bootstrap distributions; the assumption holds when the runs differ "
-            f"by seed + shard). Caller contract: control run must have been "
-            f"trained with `warm_start.neural=False`."
-        ),
+    return MetricEntry(name=name, producer="jepa", ci=delta_ci, sub_entries=[], notes=notes)
+
+
+def evaluate_run_with_ablation(
+    primary_run_dir: Path, control_run_dir: Path
+) -> tuple[MetricsOutput, GateStatus]:
+    """Evaluate ``primary_run_dir`` and append a neural_prior_ablation
+    entry computed against ``control_run_dir``.
+
+    Phase 0 v0 ablation: delta_R² = primary.partial_R² - control.partial_R²
+    where the control run was trained without the warm_start.neural
+    contribution. The orchestrator does NOT verify that the control
+    run actually had warm_start.neural=False — that's a caller
+    contract (see ``wormjepa eval --primary X --control Y`` docs in
+    cli/eval.py).
+
+    The neural_prior_ablation gate's threshold is 0.02 (FR34); the
+    delta_R² entry's CI is computed as primary.r2 - control.r2 with
+    a Wald-approximated CI by summing variances (independence
+    assumption between the two runs' bootstrap distributions —
+    appropriate when seed and data shards differ).
+    """
+    return evaluate_run_with_ablations(primary_run_dir, control_run_dir=control_run_dir)
+
+
+def evaluate_run_with_baaiworm_ablation(
+    primary_run_dir: Path, baaiworm_control_run_dir: Path
+) -> tuple[MetricsOutput, GateStatus]:
+    """Evaluate ``primary_run_dir`` and append a baaiworm_augmentation
+    ablation entry computed against ``baaiworm_control_run_dir``.
+
+    Phase 0 v0 ablation (PRD row 5): delta_R² = primary.partial_R²
+    (trained WITH BAAIWorm augmentation) - control.partial_R²
+    (trained WITHOUT BAAIWorm augmentation). The orchestrator does NOT
+    verify that the control run actually had BAAIWorm augmentation
+    removed — that's a caller contract (see the ``--baaiworm-control``
+    docs in cli/eval.py and the post-sweep runbook).
+
+    Row 5 is **reported-only — no fixed threshold** (the value is the
+    answer). The emitted ``baaiworm_augmentation_ablation_delta_r2``
+    MetricEntry is surfaced for reporting; it is deliberately NOT added
+    to ``gates.py`` / the Holm family and therefore never fires.
+    """
+    return evaluate_run_with_ablations(
+        primary_run_dir, baaiworm_control_run_dir=baaiworm_control_run_dir
     )
-    new_entries = [*metrics.entries, ablation_entry]
+
+
+def evaluate_run_with_ablations(
+    primary_run_dir: Path,
+    *,
+    control_run_dir: Path | None = None,
+    baaiworm_control_run_dir: Path | None = None,
+) -> tuple[MetricsOutput, GateStatus]:
+    """Evaluate ``primary_run_dir`` once and append zero, one, or both
+    ablation ΔR² entries against the supplied sibling control runs.
+
+    - ``control_run_dir`` → neural_prior_ablation_delta_r2 (Row 4,
+      threshold 0.02, fires via gates.py + Holm).
+    - ``baaiworm_control_run_dir`` → baaiworm_augmentation_ablation_delta_r2
+      (Row 5, reported-only, no threshold, never fires).
+
+    Each control arm is independent: when its directory is omitted, or it
+    produces no partial-R² entry, the corresponding ablation is simply not
+    appended — its gate stays ``pending`` and no number is fabricated,
+    mirroring the neural-prior behaviour exactly.
+    """
+    metrics, gate_status = evaluate_run(primary_run_dir)
+    primary_entry = next((e for e in metrics.entries if e.name == "neural_probe_partial_r2"), None)
+    if primary_entry is None:
+        return metrics, gate_status
+
+    extra_entries: list[MetricEntry] = []
+
+    if control_run_dir is not None:
+        control_entry, _ = _build_eval_cache_and_run_partial_r2(control_run_dir)
+        if control_entry is None:
+            logger.warning(
+                "evaluate_run_with_ablations: neural-prior control run %s produced no "
+                "partial_R² entry; neural_prior_ablation gate stays pending.",
+                control_run_dir,
+            )
+        else:
+            p_point = float(primary_entry.ci.point)
+            c_point = float(control_entry.ci.point)
+            extra_entries.append(
+                _wald_delta_entry(
+                    primary_entry,
+                    control_entry,
+                    name="neural_prior_ablation_delta_r2",
+                    notes=(
+                        f"Phase 0 v0 ablation: delta_R² = primary.partial_R² ({p_point:.4f}) "
+                        f"- control.partial_R² ({c_point:.4f}) = {p_point - c_point:.4f}. "
+                        f"control_run_dir={control_run_dir.name}. CI via Wald-summed-variance "
+                        f"normal approximation (independence assumed between the two runs' "
+                        f"bootstrap distributions; the assumption holds when the runs differ "
+                        f"by seed + shard). Caller contract: control run must have been "
+                        f"trained with `warm_start.neural=False`."
+                    ),
+                )
+            )
+
+    if baaiworm_control_run_dir is not None:
+        baaiworm_entry, _ = _build_eval_cache_and_run_partial_r2(baaiworm_control_run_dir)
+        if baaiworm_entry is None:
+            logger.warning(
+                "evaluate_run_with_ablations: baaiworm control run %s produced no "
+                "partial_R² entry; baaiworm_augmentation ablation stays pending.",
+                baaiworm_control_run_dir,
+            )
+        else:
+            p_point = float(primary_entry.ci.point)
+            c_point = float(baaiworm_entry.ci.point)
+            extra_entries.append(
+                _wald_delta_entry(
+                    primary_entry,
+                    baaiworm_entry,
+                    name="baaiworm_augmentation_ablation_delta_r2",
+                    notes=(
+                        f"Phase 0 v0 ablation (PRD row 5, reported-only — no threshold): "
+                        f"delta_R² = primary.partial_R² with BAAIWorm augmentation "
+                        f"({p_point:.4f}) - control.partial_R² without BAAIWorm augmentation "
+                        f"({c_point:.4f}) = {p_point - c_point:.4f}. "
+                        f"baaiworm_control_run_dir={baaiworm_control_run_dir.name}. CI via "
+                        f"Wald-summed-variance normal approximation (independence assumed "
+                        f"between the two runs' bootstrap distributions; the assumption holds "
+                        f"when the runs differ by seed + shard). Caller contract: control run "
+                        f"must have been trained with the BAAIWorm augmentation loader removed."
+                    ),
+                )
+            )
+
+    if not extra_entries:
+        return metrics, gate_status
+
+    new_entries = [*metrics.entries, *extra_entries]
     new_metrics = MetricsOutput(run_id=metrics.run_id, entries=new_entries)
     new_gate_status = evaluate_gates(new_metrics)
     new_gate_status = _apply_holm_correction(new_metrics, new_gate_status)
@@ -1249,11 +1350,12 @@ def evaluate_run(run_dir: Path) -> tuple[MetricsOutput, GateStatus]:
 
     # TODO (Story 8.12c.2+): future_pose (needs predictor + pose decoder
     # + horizon scaffolding), motif_ari (needs Flavell behavioural labels,
-    # currently deferred), neural_prior_ablation (needs ablation runner
-    # against a no-warm-start sibling run), within_state stratified R²,
-    # non-trivial-neuron subset R², BAAIWorm-augmentation ablation, plus
-    # Holm correction at alpha=0.05 across the full primary + diagnostic
-    # gate set.
+    # currently deferred), within_state stratified R², non-trivial-neuron
+    # subset R². Both ablations (neural_prior + BAAIWorm-augmentation) are
+    # wired via the sibling-control path in evaluate_run_with_ablations
+    # (invoked by `wormjepa eval --control` / `--baaiworm-control`); the
+    # single-run path here leaves them pending. Holm correction runs at
+    # alpha=0.05 across the primary + diagnostic gate set.
 
     metrics = MetricsOutput(run_id=run_dir.name, entries=entries)
     gate_status = evaluate_gates(metrics)

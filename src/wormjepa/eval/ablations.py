@@ -86,11 +86,13 @@ def baaiworm_ablation_entry(
 ) -> MetricEntry:
     """Produce the row-5 MetricEntry: ΔR² (with BAAIWorm - without).
 
-    No fixed threshold — the value itself is the answer.
+    No fixed threshold — the value itself is the answer (reported-only).
+    The entry name matches the pre-registration / STATUS.md row-5 identity
+    ``baaiworm_augmentation_ablation_delta_r2``.
     """
     result = ablation_delta(with_per_worm, without_per_worm, worm_ids, n_bootstrap=n_bootstrap)
     return MetricEntry(
-        name="baaiworm_augmentation_delta_r2",
+        name="baaiworm_augmentation_ablation_delta_r2",
         producer="jepa",
         ci=result.delta_r2,
         notes=(f"with_baaiworm={result.full_arm_mean:.3f}, without={result.ablated_arm_mean:.3f}"),
