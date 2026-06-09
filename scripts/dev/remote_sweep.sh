@@ -33,6 +33,12 @@ SKIP_RSYNC_BACK="${SKIP_RSYNC_BACK:-0}"
 SWEEP_CONFIG="${SWEEP_CONFIG:-configs/headline.yaml}"
 SWEEP_SEEDS="${SWEEP_SEEDS:-42 1337 8675309}"
 CONFIG_STEM="$(basename "$SWEEP_CONFIG" .yaml)"
+# FIX 1: opt-in background prefetch (single-producer, runs one step ahead) to
+# overlap pure-Python BAAIWorm clip synthesis with GPU compute. Default ON for
+# the headline sweep — it's a scheduling-only change, byte-identical results.
+# Set WORMJEPA_PREFETCH=0 to fall back to the synchronous loader.
+WORMJEPA_PREFETCH="${WORMJEPA_PREFETCH:-1}"
+WORMJEPA_PREFETCH_DEPTH="${WORMJEPA_PREFETCH_DEPTH:-8}"
 
 SSH_CMD="ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_HOST"
 RSYNC_SSH="ssh -i $SSH_KEY -p $REMOTE_PORT"
@@ -105,8 +111,13 @@ else
   $SSH_CMD "cd $REMOTE_REPO && rm -rf results && mkdir -p /root/results && ln -sf /root/results results"
 fi
 
-echo "[8/8] run sweep: $SWEEP_CONFIG seeds=[$SWEEP_SEEDS]"
+echo "[8/8] run sweep: $SWEEP_CONFIG seeds=[$SWEEP_SEEDS] prefetch=$WORMJEPA_PREFETCH depth=$WORMJEPA_PREFETCH_DEPTH"
+# Explicit env passthrough: WORMJEPA_PREFETCH gates the background prefetch
+# loader in the runner (src/wormjepa/training/runner.py). Exported into the
+# remote shell so `uv run wormjepa run` picks it up.
 $SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && export UV_LINK_MODE=copy && \
+    export WORMJEPA_PREFETCH=$WORMJEPA_PREFETCH && \
+    export WORMJEPA_PREFETCH_DEPTH=$WORMJEPA_PREFETCH_DEPTH && \
     for seed in $SWEEP_SEEDS; do \
       echo \"=== seed=\$seed ===\" && \
       time uv run wormjepa run --config $SWEEP_CONFIG --seed \$seed; \

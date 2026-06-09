@@ -8,6 +8,7 @@ compatibility — existing imports still work.
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 import torch
@@ -230,6 +231,21 @@ def run_jepa(cfg: JEPARunConfig, run_id: str) -> tuple[MetricsOutput, JEPATraini
     except DatasetIntegrityError:
         # Surface as-is — the CLI prints the message and exits non-zero.
         raise
+
+    # FIX 1: opt-in single-producer background prefetch. The headline loop
+    # synthesises each BAAIWorm clip in pure Python on the calling thread, so
+    # the GPU idles while the next sample builds; PrefetchLoader runs one step
+    # ahead on a daemon thread for producer/consumer overlap. This is a
+    # scheduling change only — the emitted stream and the seeded training
+    # result are byte-identical to the synchronous path (all sample-building
+    # RNG lives inside the loader's local generators, untouched by the producer
+    # thread). Legacy path is unchanged when WORMJEPA_PREFETCH is unset.
+    if os.environ.get("WORMJEPA_PREFETCH") == "1":
+        from wormjepa.data.prefetch import PrefetchLoader
+
+        prefetch_depth = int(os.environ.get("WORMJEPA_PREFETCH_DEPTH", "8"))
+        train_loader = PrefetchLoader(train_loader, depth=prefetch_depth)
+
     training_cfg = JEPATrainingConfig(
         image_size=cfg.jepa.img_size,
         latent_dim=cfg.jepa.latent_dim,
