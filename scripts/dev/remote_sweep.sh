@@ -77,11 +77,20 @@ $SSH_CMD "cd $REMOTE_REPO && \
       cd third_party/vjepa2 && git checkout -q 204698b; \
     fi"
 
-echo "[6/8] ensure WBDB + OWMD anchor data"
+echo "[6/8] ensure WBDB + OWMD data"
 # SKIP_ZENODO=1 for baaiworm-only research configs that never touch the
-# WBDB/OWMD loaders — no point fetching anchors they will not read.
+# WBDB/OWMD loaders — no point fetching data they will not read.
+# FULL_SUBSET=1 fetches the full pre-committed 100-record subsets (~45 GB,
+# the real Phase 0 headline corpus, Stories 9.5/9.6); default fetches only
+# the 3 anchors (fast smoke / research configs). The headline sweep MUST
+# set FULL_SUBSET=1 — training on anchors alone is not the pre-registered
+# corpus. zenodo-subset is idempotent + resumable, so a re-run continues.
 if [ "${SKIP_ZENODO:-0}" = "1" ]; then
-  echo "  SKIP_ZENODO=1 — skipping anchor fetch"
+  echo "  SKIP_ZENODO=1 — skipping Zenodo fetch"
+elif [ "${FULL_SUBSET:-0}" = "1" ]; then
+  echo "  FULL_SUBSET=1 — fetching full 100-record WBDB + OWMD subsets (~45 GB)"
+  $SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && \
+      uv run wormjepa fetch zenodo-subset --dataset both"
 else
   $SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && \
       uv run wormjepa fetch zenodo-anchors"
