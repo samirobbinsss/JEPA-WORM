@@ -90,6 +90,61 @@ def _open_with_range(url: str, start_byte: int) -> HTTPResponse:
     return urlopen(request, timeout=60)  # type: ignore[return-value]
 
 
+def _fetch_json_with_retry(
+    url: str,
+    *,
+    max_retries: int = _DEFAULT_MAX_RETRIES,
+    backoff_base: float = _DEFAULT_BACKOFF_BASE_SECONDS,
+) -> dict[str, Any]:
+    """GET ``url`` and parse JSON, retrying transient failures with backoff.
+
+    The Zenodo records API rate-limits (HTTP 429) under a many-record sweep; a
+    single un-retried metadata query there would fail an otherwise-fine record
+    (observed: 6/101 OWMD records 429'd during the headline fetch). Mirror
+    ``download_file``'s policy: backoff on HTTPError 5xx/429, URLError,
+    TimeoutError, ConnectionResetError; other 4xx abort immediately.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            # Use the ``urllib.request.urlopen`` attribute (not the bare import)
+            # so callers/tests can monkeypatch the metadata-fetch seam.
+            with urllib.request.urlopen(url, timeout=60) as response:
+                payload: dict[str, Any] = json.load(response)
+            return payload
+        except HTTPError as exc:
+            last_exc = exc
+            if _is_retriable_http(exc) and attempt < max_retries:
+                delay = _backoff_seconds(attempt, backoff_base)
+                logger.warning(
+                    "transient HTTP %s querying %s; retrying in %.1fs (attempt %d/%d)",
+                    exc.code,
+                    url,
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                )
+                time.sleep(delay)
+                continue
+            raise
+        except (URLError, TimeoutError, ConnectionResetError) as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                delay = _backoff_seconds(attempt, backoff_base)
+                logger.warning(
+                    "network error querying %s: %s; retrying in %.1fs (attempt %d/%d)",
+                    url,
+                    getattr(exc, "reason", exc),
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                )
+                time.sleep(delay)
+                continue
+            raise
+    raise WormJEPAError(f"exhausted retries querying {url}") from last_exc
+
+
 def download_file(
     url: str,
     dest: Path,
@@ -403,8 +458,7 @@ def download_zenodo_record(record_id: str, dest_dir: Path) -> list[Path]:
     dest_dir.mkdir(parents=True, exist_ok=True)
     api_url = f"https://zenodo.org/api/records/{record_id}"
     try:
-        with urllib.request.urlopen(api_url, timeout=60) as response:
-            payload: dict[str, Any] = json.load(response)
+        payload = _fetch_json_with_retry(api_url)
     except (HTTPError, URLError, TimeoutError) as exc:
         msg = f"Failed to query Zenodo record {record_id!r} at {api_url}: {exc}"
         raise WormJEPAError(msg) from exc
