@@ -24,6 +24,7 @@ compatibility (their removal is its own follow-up).
 
 from __future__ import annotations
 
+import errno
 import importlib
 import logging
 import sys
@@ -149,6 +150,22 @@ def fetch_zenodo_subset(
             try:
                 paths = download_zenodo_record(rid, dest)
             except WormJEPAError as exc:
+                logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
+                failures.append((ds_name, rid, str(exc)))
+                continue
+            except OSError as exc:
+                # Disk full / quota exceeded is not per-record recoverable —
+                # every remaining record would fail identically. Abort fast with
+                # an actionable message instead of a raw traceback or 190 more
+                # doomed attempts. The pull is idempotent/resumable, so freeing
+                # space (or pointing at a larger volume) and re-running continues.
+                if exc.errno in (errno.ENOSPC, errno.EDQUOT):
+                    msg = (
+                        f"out of disk space writing {dest} (errno {exc.errno}: "
+                        f"{exc.strerror}). Free space or target a larger volume, "
+                        f"then re-run — fetch resumes from what is already on disk."
+                    )
+                    raise WormJEPAError(msg) from exc
                 logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
                 failures.append((ds_name, rid, str(exc)))
                 continue
