@@ -29,7 +29,32 @@ def main() -> int:
         return 1
     name = torch.cuda.get_device_name(0)
     total_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
-    sys.stderr.write(f"GPU preflight ok: {name}, {total_gb:.0f} GB VRAM, CUDA available.\n")
+    # is_available() and the metadata queries above can ALL falsely succeed
+    # while actual context creation / allocation fails — e.g.
+    # cudaErrorDevicesUnavailable on a host-contended or wedged GPU, or an
+    # empty/incorrect CUDA_VISIBLE_DEVICES masking the device. nvidia-smi may
+    # still show the GPU idle. Force a real allocation + compute + sync so the
+    # sweep never starts against a GPU it cannot actually use.
+    try:
+        probe = torch.randn(1024, 1024, device="cuda")
+        result = (probe @ probe).sum()
+        torch.cuda.synchronize()
+        _ = float(result)
+    except Exception as exc:
+        sys.stderr.write(
+            f"GPU PREFLIGHT FAIL: {name} reports available, but a real CUDA "
+            f"allocation + matmul failed: {exc}\n"
+            "The device cannot create a usable compute context. Common causes: "
+            "the physical GPU is held by another container (host contention), a "
+            "wedged context from a crashed run, or an empty/incorrect "
+            "CUDA_VISIBLE_DEVICES. nvidia-smi often still shows the GPU idle. "
+            "Restart or reprovision the pod, then re-run. Aborting before the "
+            "sweep so no compute is wasted.\n"
+        )
+        return 1
+    sys.stderr.write(
+        f"GPU preflight ok: {name}, {total_gb:.0f} GB VRAM, real allocation + matmul verified.\n"
+    )
     return 0
 
 
