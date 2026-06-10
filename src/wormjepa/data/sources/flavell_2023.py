@@ -49,7 +49,7 @@ SPEC = DatasetSource(
     sha256="sha256-pending-real-download-story-8-4",
     doi="10.5281/zenodo.8150515",
     license="CC-BY-4.0",
-    citation="atanas_flavell_2023",
+    citation="atanas-flavell-2023",
     redistribution_restrictions=(
         "Zenodo hosts the canonical archive; no project-side redistribution."
     ),

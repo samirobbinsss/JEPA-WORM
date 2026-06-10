@@ -585,7 +585,7 @@ SPEC = ZenodoSubsetSource(
         ),
     ],
     license="CC-BY-4.0",
-    citation="javer_openworm_2018",
+    citation="javer-openworm-2018",
     redistribution_restrictions=(
         "Zenodo hosts per-experiment records; no project-side redistribution."
     ),

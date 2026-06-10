@@ -59,7 +59,7 @@ SPEC = DandiFederationSource(
         ),  # SF (freely moving, 38 worms) — eval
     ],
     license="CC-BY-4.0",
-    citation="sprague_wormid_2025",
+    citation="sprague-wormid-2025",
     redistribution_restrictions=(
         "DANDI archive provides canonical hosting; no project-side redistribution."
     ),

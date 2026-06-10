@@ -22,7 +22,7 @@ SPEC = GithubGeneratorSource(
     config_path="Metaworm/args/run_worm_swim_args.txt",
     config_sha256="bbc9fa9bdd08982cd6506a7148fbb70e321eb04ad774b026fe2a0d877cc2845b",
     license="See repository LICENSE (MIT-style, per upstream).",
-    citation="zhao_baaiworm_2024",
+    citation="zhao-baaiworm-2024",
     redistribution_restrictions=(
         "GitHub is the canonical source; no project-side redistribution. "
         "Reproducers fetch by commit SHA via the standard git checkout flow."

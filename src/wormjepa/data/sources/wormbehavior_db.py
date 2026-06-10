@@ -573,7 +573,7 @@ SPEC = ZenodoSubsetSource(
         ),
     ],
     license="CC-BY-4.0",
-    citation="yemini_brown_2013",
+    citation="yemini-brown-2013",
     redistribution_restrictions=(
         "Zenodo hosts per-experiment records; no project-side redistribution."
     ),
