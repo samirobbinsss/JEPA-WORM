@@ -40,8 +40,13 @@ CONFIG_STEM="$(basename "$SWEEP_CONFIG" .yaml)"
 WORMJEPA_PREFETCH="${WORMJEPA_PREFETCH:-1}"
 WORMJEPA_PREFETCH_DEPTH="${WORMJEPA_PREFETCH_DEPTH:-8}"
 
-SSH_CMD="ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_HOST"
-RSYNC_SSH="ssh -i $SSH_KEY -p $REMOTE_PORT"
+# Keepalive options so long-running steps (uv sync, 45 GB fetch, multi-hour
+# training) survive an idle/slow link instead of dropping with "Operation timed
+# out / Broken pipe". ServerAliveInterval 30s x CountMax 20 tolerates ~10 min of
+# silence before giving up.
+_SSH_KEEPALIVE="-o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o TCPKeepAlive=yes"
+SSH_CMD="ssh $_SSH_KEEPALIVE -i $SSH_KEY -p $REMOTE_PORT $REMOTE_HOST"
+RSYNC_SSH="ssh $_SSH_KEEPALIVE -i $SSH_KEY -p $REMOTE_PORT"
 
 echo "remote_sweep: LOCAL=$LOCAL_REPO REMOTE=$REMOTE_HOST:$REMOTE_REPO"
 
@@ -112,16 +117,35 @@ else
 fi
 
 echo "[8/8] run sweep: $SWEEP_CONFIG seeds=[$SWEEP_SEEDS] prefetch=$WORMJEPA_PREFETCH depth=$WORMJEPA_PREFETCH_DEPTH"
-# Explicit env passthrough: WORMJEPA_PREFETCH gates the background prefetch
-# loader in the runner (src/wormjepa/training/runner.py). Exported into the
-# remote shell so `uv run wormjepa run` picks it up.
-$SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && export UV_LINK_MODE=copy && \
-    export WORMJEPA_PREFETCH=$WORMJEPA_PREFETCH && \
-    export WORMJEPA_PREFETCH_DEPTH=$WORMJEPA_PREFETCH_DEPTH && \
-    for seed in $SWEEP_SEEDS; do \
-      echo \"=== seed=\$seed ===\" && \
-      time uv run wormjepa run --config $SWEEP_CONFIG --seed \$seed; \
-    done"
+# Write the seed loop to a pod-side script, then run it. Writing a script (vs a
+# one-line inline SSH command) avoids fragile nested-quote escaping and lets the
+# sweep run detached. WORMJEPA_PREFETCH gates the background prefetch loader in
+# the runner (src/wormjepa/training/runner.py).
+$SSH_CMD "cat > $REMOTE_REPO/run_sweep.sh" <<REMOTE_SWEEP_SCRIPT
+#!/usr/bin/env bash
+set -euo pipefail
+cd $REMOTE_REPO
+export PATH=\$HOME/.local/bin:\$PATH
+export UV_LINK_MODE=copy
+export WORMJEPA_PREFETCH=$WORMJEPA_PREFETCH
+export WORMJEPA_PREFETCH_DEPTH=$WORMJEPA_PREFETCH_DEPTH
+for seed in $SWEEP_SEEDS; do
+  echo "=== seed=\$seed ==="
+  time uv run wormjepa run --config $SWEEP_CONFIG --seed \$seed
+done
+echo "=== sweep complete ==="
+REMOTE_SWEEP_SCRIPT
+
+if [ "${SWEEP_DETACH:-0}" = "1" ]; then
+  # Detach on the pod so a multi-hour sweep survives SSH drops. Progress -> the
+  # pod-side log; poll it (SSH tail) for per-seed metrics, collect results after.
+  REMOTE_SWEEP_LOG="$REMOTE_REPO/sweep.log"
+  $SSH_CMD "nohup bash $REMOTE_REPO/run_sweep.sh > $REMOTE_SWEEP_LOG 2>&1 < /dev/null & echo DETACHED pid \$! log $REMOTE_SWEEP_LOG"
+  echo "remote_sweep: sweep launched DETACHED on pod -> $REMOTE_SWEEP_LOG"
+  echo "remote_sweep: poll that log for progress; results NOT rsynced (collect after completion)."
+  exit 0
+fi
+$SSH_CMD "bash $REMOTE_REPO/run_sweep.sh"
 
 if [ "$SKIP_RSYNC_BACK" != "1" ]; then
   echo "[post] rsync results back"
