@@ -180,13 +180,18 @@ class WormIDLoader:
         # signature is (path, mode, load_namespaces=False, ...).
         with NWBHDF5IO(str(nwb_path), "r") as io:  # pyright: ignore[reportCallIssue]
             nwbfile: NWBFileLike = io.read()
-            video_array, video_rate = _find_first_image_series(nwbfile, nwb_path)
+            video_array, video_frame_rate = _find_first_image_series(nwbfile, nwb_path)
             if video_array is None:
                 logger.warning(
                     "WormIDLoader: no ImageSeries found in %s; skipping",
                     nwb_path,
                 )
                 return
+
+            # 1.0 Hz is the resampling sentinel used when the NWB file has no
+            # populated rate (see _find_first_image_series). Keep that sentinel
+            # for neural alignment, but only stamp a real rate on DatasetSample.
+            video_rate = video_frame_rate if video_frame_rate is not None else 1.0
 
             neural_array, neural_rate = _find_first_neural_time_series(nwbfile)
 
@@ -233,6 +238,7 @@ class WormIDLoader:
                     worm_id=worm_id,
                     session_id=session_id,
                     source_dataset=SourceDataset("wormid"),
+                    frame_rate=video_frame_rate,
                 )
 
 
@@ -248,14 +254,15 @@ def _select_dandisets(cohort: Cohort) -> frozenset[str]:
 
 def _find_first_image_series(
     nwbfile: NWBFileLike, nwb_path: Path
-) -> tuple[Any, float] | tuple[None, float]:
+) -> tuple[Any, float | None] | tuple[None, None]:
     """Locate the first ``ImageSeries`` in ``acquisition`` or processing modules.
 
     Returns a tuple ``(data_handle, frame_rate)`` where ``data_handle`` is the
     HDF5-backed dataset (lazy) or ``None`` if no ``ImageSeries`` is present.
-    Frame rate falls back to 1.0 Hz if neither ``rate`` nor ``timestamps`` is
-    populated — sampling-rate-aware downstream code (neural resampling) must
-    treat 1.0 as a sentinel.
+    Frame rate is ``None`` when the chosen series has no populated ``rate`` —
+    the caller substitutes a 1.0 Hz sentinel for neural resampling but leaves
+    :attr:`DatasetSample.frame_rate` unset (``None``) so an unknown rate is
+    never silently reported as a real one.
     """
     candidates: list[TimeSeriesLike] = []
     for ts in nwbfile.acquisition.values():
@@ -266,14 +273,14 @@ def _find_first_image_series(
             if isinstance(ts, ImageSeries):
                 candidates.append(ts)
     if not candidates:
-        return None, 1.0
+        return None, None
 
     # Deterministic pick: first by name to make iteration order reproducible
     # when more than one ImageSeries is present.
     candidates.sort(key=lambda x: cast(str, x.name))
     chosen = candidates[0]
     rate_raw = cast(float | None, chosen.rate)
-    rate = float(rate_raw) if rate_raw is not None else 1.0
+    rate = float(rate_raw) if rate_raw is not None else None
     if len(candidates) > 1:
         logger.info(
             "WormIDLoader: %s has %d ImageSeries; using %r",

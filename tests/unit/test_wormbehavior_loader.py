@@ -111,6 +111,26 @@ def test_loader_yields_correct_shape_and_pose(tmp_path: Path) -> None:
     assert s.pose.shape == (4, 49, 2)
     assert s.source_dataset == SourceDataset("wormbehavior_db")
     assert s.worm_id.startswith("wormbehavior_")
+    # frame_rate propagates from the mask dataset's fps attr (Schafer reader).
+    assert s.frame_rate == 30.0
+
+
+def test_frame_rate_falls_back_to_default_when_fps_absent(tmp_path: Path) -> None:
+    """No fps attr → the Schafer reader's 30 Hz default surfaces on the sample."""
+    root = tmp_path / "no_fps"
+    root.mkdir()
+    rid = ANCHOR_RECORD_IDS[0]
+    sub = root / rid
+    sub.mkdir()
+    rng = np.random.default_rng(seed=11)
+    with h5py.File(sub / "no_fps.hdf5", "w") as f:
+        # mask with no fps attr.
+        f.create_dataset("mask", data=rng.integers(0, 255, (8, 8, 8), dtype=np.uint8))
+        f.create_dataset("skeleton", data=np.zeros((8, 49, 2), dtype=np.float32))
+    loader = WormBehaviorDBLoader(root, clip_frames=4, image_size=(4, 4))
+    samples = list(loader)
+    assert samples
+    assert samples[0].frame_rate == 30.0
 
 
 def test_pose_none_when_skeleton_absent(tmp_path: Path) -> None:

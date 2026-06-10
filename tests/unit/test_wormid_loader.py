@@ -187,7 +187,44 @@ def test_sample_contract_compliance(tmp_path: Path) -> None:
         assert sample.source_dataset == SourceDataset("wormid")
         assert sample.worm_id.startswith("wormid_")
         assert sample.session_id.startswith(sample.worm_id)
+        # frame_rate propagates from the ImageSeries rate (fixture uses 10.0 Hz).
+        assert sample.frame_rate == 10.0
     assert seen_with_neural > 0, "fixture should produce at least one neural-bearing sample"
+
+
+def test_frame_rate_none_when_image_series_has_no_rate(tmp_path: Path) -> None:
+    """An ImageSeries timed by timestamps (rate=None) leaves frame_rate unset.
+
+    The loader substitutes a 1.0 Hz sentinel for neural resampling but must not
+    report that sentinel as a real frame rate on the sample.
+    """
+    root = tmp_path / "no_rate"
+    root.mkdir()
+    did = TRAIN_DANDISETS[0]
+    subdir = root / did
+    subdir.mkdir()
+    nwb = NWBFile(
+        session_description="no-rate fixture",
+        identifier="no-rate-id",
+        session_start_time=datetime.datetime.now(datetime.UTC),
+        subject=Subject(subject_id="no-rate", species="C. elegans"),
+    )
+    rng = np.random.default_rng(seed=99)
+    video = rng.integers(0, 255, size=(8, 8, 8), dtype=np.uint8)
+    # Timestamps instead of rate -> ImageSeries.rate is None. pynwb's
+    # @docval-decorated constructors are invisible to pyright (same pattern as
+    # _write_minimal_nwb above); ignore the spurious reportCallIssue.
+    nwb.add_acquisition(
+        ImageSeries(  # pyright: ignore[reportCallIssue]
+            name="video", data=video, timestamps=list(np.arange(8) * 0.1), unit="n.a."
+        )
+    )
+    with NWBHDF5IO(str(subdir / "no_rate.nwb"), "w") as io:  # pyright: ignore[reportCallIssue]
+        io.write(nwb)  # pyright: ignore[reportCallIssue]
+    loader = WormIDLoader(root, cohort="train", clip_frames=4, image_size=(4, 4))
+    samples = list(loader)
+    assert samples
+    assert all(s.frame_rate is None for s in samples)
 
 
 def test_iteration_is_deterministic(tmp_path: Path) -> None:

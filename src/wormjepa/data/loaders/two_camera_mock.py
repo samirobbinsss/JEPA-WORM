@@ -22,6 +22,11 @@ from collections.abc import Iterator
 from wormjepa.data.contract import DatasetSample
 from wormjepa.hardware import MockCameraPair
 
+#: Nominal frame rate of MockCameraPair's synthetic clips. Mirrors the
+#: ``timestamps = arange(T) / 30.0`` axis in
+#: :meth:`wormjepa.hardware.camera_pair.MockCameraPair.iter_samples`.
+_MOCK_FRAME_RATE: float = 30.0
+
 
 class TwoCameraMockLoader:
     """:class:`MockCameraPair`-backed loader yielding single-view
@@ -71,4 +76,9 @@ class TwoCameraMockLoader:
         for two_view in self._rig.iter_samples(
             n_clips=self._n_clips, clip_frames=self._clip_frames
         ):
-            yield two_view.to_dataset_sample()
+            # MockCameraPair stamps a nominal 30 fps timestamp axis
+            # (timestamps = arange(T) / 30.0); surface that rate so this
+            # hardware-pilot stand-in is timing-comparable with the real
+            # corpora. to_dataset_sample() lives in the hardware contract and
+            # leaves frame_rate=None, so inject it here.
+            yield two_view.to_dataset_sample()._replace(frame_rate=_MOCK_FRAME_RATE)

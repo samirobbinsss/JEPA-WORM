@@ -508,4 +508,5 @@ class SchaferZenodoSubsetLoader:
                     worm_id=worm_id,
                     session_id=session_id,
                     source_dataset=self.source_dataset,
+                    frame_rate=opened.frame_rate,
                 )

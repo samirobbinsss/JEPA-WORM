@@ -120,6 +120,24 @@ def test_loader_yields_correct_shape(tmp_path: Path) -> None:
     assert s.source_dataset == SourceDataset("flavell_2023")
     assert s.worm_id.startswith("flavell_")
     assert not s.worm_id.startswith("wormid_")
+    # frame_rate propagates from the video dataset's frame_rate attr.
+    assert s.frame_rate == 3.0
+
+
+def test_frame_rate_falls_back_to_default_when_attr_absent(tmp_path: Path) -> None:
+    """No frame_rate attr → the loader's nominal ~3 Hz default is surfaced."""
+    root = tmp_path / "no_rate"
+    root.mkdir()
+    rng = np.random.default_rng(seed=7)
+    with h5py.File(root / "w.h5", "w") as f:
+        f.create_dataset("neural_activity", data=rng.standard_normal((8, 3)).astype(np.float32))
+        f.create_dataset("behavioral_state", data=rng.integers(0, 4, size=8, dtype=np.int32))
+        # No frame_rate attr on the video dataset.
+        f.create_dataset("video", data=np.zeros((8, 8, 8), dtype=np.uint8))
+    loader = Flavell2023Loader(root, clip_frames=4, image_size=(4, 4))
+    samples = list(loader)
+    assert samples
+    assert samples[0].frame_rate == 3.0
 
 
 def test_behavioral_state_surfaces_as_dedicated_field(tmp_path: Path) -> None:

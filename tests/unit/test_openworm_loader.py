@@ -86,6 +86,8 @@ def test_loader_yields_correct_shape_and_pose(tmp_path: Path) -> None:
     assert s.worm_id.startswith("openworm_")
     # Distinct namespace from WormBehaviorDBLoader (avoids cross-dataset collisions).
     assert not s.worm_id.startswith("wormbehavior_")
+    # frame_rate propagates from the mask dataset's fps attr (Schafer reader).
+    assert s.frame_rate == 30.0
 
 
 def test_pose_none_when_skeleton_absent(tmp_path: Path) -> None:

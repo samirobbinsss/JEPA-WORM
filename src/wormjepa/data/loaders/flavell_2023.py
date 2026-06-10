@@ -330,6 +330,7 @@ class Flavell2023Loader:
                     session_id=session_id,
                     source_dataset=SourceDataset("flavell_2023"),
                     behavioral_state=behavioral_state,
+                    frame_rate=frame_rate,
                 )
 
 

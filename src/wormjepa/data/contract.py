@@ -69,6 +69,13 @@ class DatasetSample(NamedTuple):
             annotation. Consumed by Story 6.3's motif-ARI metric
             (``wormjepa.eval.motif_ari``). Kept separate from ``neural`` so the
             integer label type is preserved end-to-end.
+        frame_rate: Sampling rate of ``video_clip`` in frames per second, or
+            ``None`` when the source loader does not know its rate. Propagated
+            so cross-dataset clip timing is comparable — a clip of ``T`` frames
+            spans ``T / frame_rate`` seconds, and the Schafer/Flavell corpora
+            sit at very different rates (~30 Hz tracker vs ~3 Hz volumetric).
+            Strictly additive and defaulted to ``None``: loaders that cannot
+            determine their rate leave it unset rather than guessing.
     """
 
     video_clip: torch.Tensor
@@ -78,3 +85,4 @@ class DatasetSample(NamedTuple):
     session_id: SessionID
     source_dataset: SourceDataset
     behavioral_state: torch.Tensor | None = None
+    frame_rate: float | None = None

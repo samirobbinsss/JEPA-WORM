@@ -53,8 +53,9 @@ def test_dataset_sample_field_order_is_documented() -> None:
 
     Downstream loaders may construct samples positionally; the field order
     is part of the contract and changing it would break every loader.
-    ``behavioral_state`` is appended at the end with a ``None`` default so
-    existing positional and keyword call sites continue to work.
+    ``behavioral_state`` and ``frame_rate`` are appended at the end with
+    ``None`` defaults so existing positional and keyword call sites continue
+    to work.
     """
     assert DatasetSample._fields == (
         "video_clip",
@@ -64,6 +65,7 @@ def test_dataset_sample_field_order_is_documented() -> None:
         "session_id",
         "source_dataset",
         "behavioral_state",
+        "frame_rate",
     )
 
 
@@ -78,6 +80,33 @@ def test_behavioral_state_defaults_to_none() -> None:
         source_dataset=SourceDataset("wormid"),
     )
     assert sample.behavioral_state is None
+
+
+def test_frame_rate_defaults_to_none() -> None:
+    """Loaders that don't know their rate can construct samples without the field."""
+    sample = DatasetSample(
+        video_clip=torch.zeros((1, 3, 8, 8)),
+        pose=None,
+        neural=None,
+        worm_id=WormID("w"),
+        session_id=SessionID("s"),
+        source_dataset=SourceDataset("synthetic"),
+    )
+    assert sample.frame_rate is None
+
+
+def test_frame_rate_round_trips_when_set() -> None:
+    """A loader-supplied rate survives on the constructed sample."""
+    sample = DatasetSample(
+        video_clip=torch.zeros((1, 3, 8, 8)),
+        pose=None,
+        neural=None,
+        worm_id=WormID("w"),
+        session_id=SessionID("s"),
+        source_dataset=SourceDataset("flavell_2023"),
+        frame_rate=3.0,
+    )
+    assert sample.frame_rate == 3.0
 
 
 def test_newtype_aliases_distinguish_identifier_strings_at_runtime() -> None:

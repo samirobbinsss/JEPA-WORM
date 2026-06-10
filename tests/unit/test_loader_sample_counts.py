@@ -66,6 +66,32 @@ def test_synthesising_loader_yields_at_least_four_samples(loader_name: str) -> N
         _assert_sample_contract(s)
 
 
+# Nominal frame rate each in-process loader stamps on its samples. The pose
+# synthesisers (synthetic, baaiworm) model no wall-clock rate and leave it
+# None; the two-camera mock mirrors MockCameraPair's 30 fps timestamp axis.
+_SYNTH_FRAME_RATES: dict[str, float | None] = {
+    "synthetic": None,
+    "baaiworm": None,
+    "two_camera_mock": 30.0,
+}
+
+
+@pytest.mark.parametrize("loader_name", _SYNTH_LOADERS)
+def test_synthesising_loader_frame_rate(loader_name: str) -> None:
+    """frame_rate is additive: None for the pose synths, 30 fps for the mock rig."""
+    spec = DatasetLoaderSpec(
+        name=loader_name,  # type: ignore[arg-type]
+        n_worms=2,
+        clips_per_worm=2,
+        clip_frames=4,
+        image_size=8,
+    )
+    samples = list(build_loader([spec], seed=0))
+    assert samples
+    expected = _SYNTH_FRAME_RATES[loader_name]
+    assert all(s.frame_rate == expected for s in samples)
+
+
 @pytest.mark.parametrize(("loader_name", "env_var"), list(_FILE_LOADERS.items()))
 def test_file_backed_loader_yields_at_least_one_sample(loader_name: str, env_var: str) -> None:
     """File-based loaders need a real-data root. Skip when absent in CI."""
