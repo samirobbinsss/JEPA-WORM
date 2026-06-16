@@ -40,6 +40,30 @@ CONFIG_STEM="$(basename "$SWEEP_CONFIG" .yaml)"
 WORMJEPA_PREFETCH="${WORMJEPA_PREFETCH:-1}"
 WORMJEPA_PREFETCH_DEPTH="${WORMJEPA_PREFETCH_DEPTH:-8}"
 
+# Cross-pod resumable checkpointing. WORMJEPA_CHECKPOINT_EVERY>0 makes the runner
+# atomic-save a checkpoint every N steps to a stable per-(config,seed) path under
+# results/_resume/ on the /workspace network volume, and resume from it on
+# relaunch. Combined with the per-seed `done` marker the sweep loop checks below,
+# a fresh pod re-running this script skips finished seeds and continues the
+# interrupted one — so an ephemeral pod dying mid-run is no longer fatal. Default
+# 0 (off) preserves prior single-shot behaviour; the headline launch sets it.
+WORMJEPA_CHECKPOINT_EVERY="${WORMJEPA_CHECKPOINT_EVERY:-0}"
+# config-slug for the resume/done path; mirrors the runner's run-id slug rule
+# (lowercase, any run of non-alphanumerics -> a single underscore).
+SWEEP_SLUG="$(printf '%s' "$CONFIG_STEM" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/_/g; s/^_+//; s/_+$//')"
+
+# CRITICAL placement split (learned 2026-06-15 the hard way):
+#   - The venv + uv cache + tmp go on the LOCAL overlay disk (/root). Installing
+#     torch (thousands of small files, a ~2 GB libtorch_cuda.so) into a venv on
+#     the MooseFS /workspace network volume deadlocks: uv pins at 0% CPU / 0 net,
+#     load spikes, and `uv sync` never finishes. Local-disk small-file writes are
+#     fast. No UV_LINK_MODE=copy -> uv hardlinks venv<-cache on the same local fs
+#     (instant, space-efficient: ~10 GB peak on the 20 GB overlay).
+#   - Only big SEQUENTIAL artifacts stay on /workspace: the torch-hub ViT-L
+#     checkpoint (TORCH_HOME, one ~1.3 GB file) and the 45 GB Zenodo data — these
+#     are fine on the network volume and benefit from surviving pod close.
+_REMOTE_CACHE_ENV="mkdir -p /root/uvcache /root/uvtmp /root/xdg $(dirname "$REMOTE_REPO")/.caches/torch $(dirname "$REMOTE_REPO")/.caches/hf && export UV_PROJECT_ENVIRONMENT=/root/jepa-venv UV_CACHE_DIR=/root/uvcache TMPDIR=/root/uvtmp XDG_CACHE_HOME=/root/xdg TORCH_HOME=$(dirname "$REMOTE_REPO")/.caches/torch HF_HOME=$(dirname "$REMOTE_REPO")/.caches/hf WORMJEPA_CHECKPOINT_DIR=$(dirname "$REMOTE_REPO")/.caches/vjepa-ckpt"
+
 # Keepalive options so long-running steps (uv sync, 45 GB fetch, multi-hour
 # training) survive an idle/slow link instead of dropping with "Operation timed
 # out / Broken pipe". ServerAliveInterval 30s x CountMax 20 tolerates ~10 min of
@@ -67,12 +91,10 @@ rsync -avz --no-owner --no-group \
     "$LOCAL_REPO/" "$REMOTE_HOST:$REMOTE_REPO/"
 
 echo "[3/8] ensure uv + venv + package install"
-$SSH_CMD "cd $REMOTE_REPO && \
+$SSH_CMD "cd $REMOTE_REPO && $_REMOTE_CACHE_ENV && \
     (which uv >/dev/null 2>&1 || (curl -LsSf https://astral.sh/uv/install.sh | sh)) && \
     export PATH=\$HOME/.local/bin:\$PATH && \
-    export UV_LINK_MODE=copy && \
-    uv sync --quiet && \
-    uv pip install -e . --quiet"
+    uv sync --quiet"
 
 echo "[4/8] GPU preflight (CUDA driver check)"
 # Fail fast on a mis-provisioned pod (driver too old, no GPU) before the
@@ -100,17 +122,21 @@ if [ "${SKIP_ZENODO:-0}" = "1" ]; then
   echo "  SKIP_ZENODO=1 — skipping Zenodo fetch"
 elif [ "${FULL_SUBSET:-0}" = "1" ]; then
   echo "  FULL_SUBSET=1 — fetching full 100-record WBDB + OWMD subsets (~45 GB)"
-  $SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && \
-      uv run wormjepa fetch zenodo-subset --dataset both"
+  $SSH_CMD "cd $REMOTE_REPO && $_REMOTE_CACHE_ENV && export PATH=\$HOME/.local/bin:\$PATH && \
+      uv run wormjepa fetch zenodo-subset --dataset both --workers 16"
 else
-  $SSH_CMD "cd $REMOTE_REPO && export PATH=\$HOME/.local/bin:\$PATH && \
+  $SSH_CMD "cd $REMOTE_REPO && $_REMOTE_CACHE_ENV && export PATH=\$HOME/.local/bin:\$PATH && \
       uv run wormjepa fetch zenodo-anchors"
 fi
 
 echo "[7/8] symlink results"
 if [ "${WORMJEPA_RESULTS_ON_WORKSPACE:-0}" = "1" ]; then
   echo "  results on /workspace (FUSE; survives pod close)"
-  $SSH_CMD "cd $REMOTE_REPO && rm -rf results && mkdir -p results"
+  # PRESERVE existing results — do NOT rm. On a resume-pod the per-seed
+  # checkpoints + done markers under results/_resume/ are exactly what lets the
+  # run continue instead of restarting from step 0; wiping them defeats the
+  # cross-pod resume. mkdir -p is enough (first launch has nothing to keep).
+  $SSH_CMD "cd $REMOTE_REPO && mkdir -p results"
 else
   echo "  results -> /root (container disk; LOST on pod close; faster torch.save)"
   $SSH_CMD "cd $REMOTE_REPO && rm -rf results && mkdir -p /root/results && ln -sf /root/results results"
@@ -126,10 +152,16 @@ $SSH_CMD "cat > $REMOTE_REPO/run_sweep.sh" <<REMOTE_SWEEP_SCRIPT
 set -euo pipefail
 cd $REMOTE_REPO
 export PATH=\$HOME/.local/bin:\$PATH
-export UV_LINK_MODE=copy
+$_REMOTE_CACHE_ENV
 export WORMJEPA_PREFETCH=$WORMJEPA_PREFETCH
 export WORMJEPA_PREFETCH_DEPTH=$WORMJEPA_PREFETCH_DEPTH
+export WORMJEPA_CHECKPOINT_EVERY=$WORMJEPA_CHECKPOINT_EVERY
 for seed in $SWEEP_SEEDS; do
+  DONE_MARKER="$REMOTE_REPO/results/_resume/${SWEEP_SLUG}__seed\${seed}/done"
+  if [ -f "\$DONE_MARKER" ]; then
+    echo "=== seed=\$seed already complete — skipping (\$DONE_MARKER) ==="
+    continue
+  fi
   echo "=== seed=\$seed ==="
   time uv run wormjepa run --config $SWEEP_CONFIG --seed \$seed
 done
