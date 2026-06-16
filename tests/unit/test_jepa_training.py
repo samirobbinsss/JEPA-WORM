@@ -487,12 +487,15 @@ def test_warmup_scales_each_group_base_lr() -> None:
     assert encoder_group["lr"] == 1.0e-4 * 0.25
     assert head_group["lr"] == 5.0e-4 * 0.25
 
-    # Run the remaining 3 warmup steps; both groups reach their base_lr.
+    # Run to a total of 4 warmup steps (3 more, since `state` is at step 1):
+    # `n_steps` is the TOTAL step target, not an increment — `train_jepa` runs
+    # `while state.step < n_steps`, so a reused state continues toward the target
+    # rather than running n_steps fresh. Both groups reach base_lr at step 4.
     cfg_finish = JEPATrainingConfig(
         image_size=64,
         latent_dim=16,
         masking_ratio=0.5,
-        n_steps=3,
+        n_steps=4,
         batch_size=1,
         learning_rate=1.0e-4,
         warmup_steps=4,
@@ -503,6 +506,100 @@ def test_warmup_scales_each_group_base_lr() -> None:
     encoder_group, head_group = state.optimizer.param_groups
     assert encoder_group["lr"] == encoder_group["base_lr"]
     assert head_group["lr"] == head_group["base_lr"]
+
+
+def test_resume_continues_to_total_n_steps(tmp_path: Path) -> None:
+    """`train_jepa` runs `while step < n_steps`, so resuming from a checkpoint
+    continues toward the TOTAL step target instead of running n_steps again —
+    the cross-pod resume invariant. A fresh state that loads a step-2 checkpoint
+    and runs with n_steps=5 must end at step 5 (3 more), not 7."""
+    set_seeds(0)
+    state = _build_state(latent_dim=16)
+    cfg2 = JEPATrainingConfig(
+        image_size=64,
+        latent_dim=16,
+        masking_ratio=0.5,
+        n_steps=2,
+        batch_size=1,
+        learning_rate=1.0e-4,
+        ema_decay=0.99,
+        warm_start=WarmStartFlags(),
+    )
+    train_jepa(cfg2, _wide_loader(), state, graph_prior_target_edges=torch.randn(4))
+    assert state.step == 2
+    ckpt = tmp_path / "checkpoint.pt"
+    save_checkpoint(state, ckpt)
+
+    # A freshly-built state stands in for a new pod; load the checkpoint, resume.
+    state_resumed = _build_state(latent_dim=16)
+    load_checkpoint(state_resumed, ckpt)
+    assert state_resumed.step == 2
+    cfg5 = cfg2.model_copy(update={"n_steps": 5})
+    train_jepa(cfg5, _wide_loader(), state_resumed, graph_prior_target_edges=torch.randn(4))
+    assert state_resumed.step == 5
+
+
+def test_resume_reapplies_curriculum_freeze(tmp_path: Path) -> None:
+    """Resuming from a checkpoint at/after `warm_start_after_step` must re-freeze
+    the online encoder before any further step: the one-shot `==` freeze event
+    already passed on the crashed pod and never re-fires, and load_checkpoint
+    restores weights into a freshly-built (trainable) encoder. An unfrozen
+    phase-2 encoder collapses the latent (the E5/E6 finding)."""
+    set_seeds(0)
+    state = _build_state(latent_dim=16)
+    cfg = JEPATrainingConfig(
+        image_size=64,
+        latent_dim=16,
+        masking_ratio=0.5,
+        n_steps=2,
+        batch_size=1,
+        learning_rate=1.0e-4,
+        ema_decay=0.99,
+        warm_start=WarmStartFlags(),
+        warm_start_after_step=1,
+    )
+    train_jepa(cfg, _wide_loader(), state, graph_prior_target_edges=torch.randn(4))
+    ckpt = tmp_path / "checkpoint.pt"
+    save_checkpoint(state, ckpt)
+
+    # A fresh encoder is trainable; loading weights does not by itself re-freeze.
+    state_resumed = _build_state(latent_dim=16)
+    assert all(p.requires_grad for p in state_resumed.online_encoder.parameters())
+    load_checkpoint(state_resumed, ckpt)
+    cfg_more = cfg.model_copy(update={"n_steps": 4})
+    train_jepa(cfg_more, _wide_loader(), state_resumed, graph_prior_target_edges=torch.randn(4))
+    assert not any(p.requires_grad for p in state_resumed.online_encoder.parameters())
+
+
+def test_checkpoint_every_writes_periodically(tmp_path: Path) -> None:
+    """`checkpoint_every>0` with a `checkpoint_path` atomic-saves every N steps;
+    the file exists, leaves no `.tmp` sibling, and reloads to the latest step."""
+    set_seeds(0)
+    state = _build_state(latent_dim=16)
+    cfg = JEPATrainingConfig(
+        image_size=64,
+        latent_dim=16,
+        masking_ratio=0.5,
+        n_steps=4,
+        batch_size=1,
+        learning_rate=1.0e-4,
+        ema_decay=0.99,
+        warm_start=WarmStartFlags(),
+    )
+    ckpt = tmp_path / "checkpoint.pt"
+    train_jepa(
+        cfg,
+        _wide_loader(),
+        state,
+        graph_prior_target_edges=torch.randn(4),
+        checkpoint_path=ckpt,
+        checkpoint_every=2,
+    )
+    assert ckpt.is_file()
+    assert not ckpt.with_name(ckpt.name + ".tmp").exists()  # atomic: no leftover tmp
+    reloaded = _build_state(latent_dim=16)
+    load_checkpoint(reloaded, ckpt)
+    assert reloaded.step == 4  # last periodic save lands at step 4 (4 % 2 == 0)
 
 
 def test_warm_start_loss_scale_only_scales_heads(tmp_path: Path) -> None:

@@ -258,6 +258,8 @@ def train_jepa(
     graph_prior_target_edges: torch.Tensor | None = None,
     log_path: Path | None = None,
     clips_dir: Path | None = None,
+    checkpoint_path: Path | None = None,
+    checkpoint_every: int = 0,
 ) -> None:
     """Run the training loop in-place on ``state``.
 
@@ -310,6 +312,18 @@ def train_jepa(
     # Snapshot the model device once and route each sample through it so the
     # forward pass sees co-located tensors.
     model_device = next(online.parameters()).device
+
+    # Resume-correctness: the two-phase curriculum freezes the online encoder at
+    # exactly `warm_start_after_step` via a one-shot `==` event in the loop
+    # below. If `state.step` was restored from a checkpoint at or past that
+    # boundary (cross-pod resume), the `==` event already fired on the pod that
+    # crashed and will never re-fire here — so re-apply the freeze now. An
+    # unfrozen encoder in phase 2 collapses the latent (the E5/E6 finding);
+    # silently training it on resume would corrupt the headline result.
+    if config.warm_start_after_step > 0 and state.step >= config.warm_start_after_step:
+        for p in online.parameters():
+            p.requires_grad_(False)
+        logger.info("curriculum: re-froze online encoder on resume at step %d", state.step)
 
     rollout: RolloutRecorder | None = None
 
@@ -398,7 +412,11 @@ def train_jepa(
         # nudge rather than drag the encoder (Experiment 5/6).
         return config.loss_weights.get(name, 0.0) * config.warm_start_loss_scale
 
-    for _ in range(config.n_steps):
+    # `while step < n_steps` (not `for _ in range(n_steps)`): on a cross-pod
+    # resume `state.step` starts at the restored value, so the loop runs only the
+    # REMAINING steps to reach n_steps — not n_steps more. The `if not batch`
+    # guard below still bounds an empty corpus, so this cannot spin forever.
+    while state.step < config.n_steps:
         batch = _next_batch()
         if not batch:
             break  # dataset fully exhausted (single-pass generator, empty)
@@ -554,6 +572,19 @@ def train_jepa(
             target.update(online)  # type: ignore[arg-type]
         state.step += 1
         state.last_losses = {name: float(loss.detach()) for name, loss in losses.items()}
+
+        # Periodic resumable checkpoint (cross-pod survival). Atomic-save every
+        # `checkpoint_every` steps so an ephemeral pod that dies mid-run can be
+        # replaced and resume from the last boundary instead of step 0.
+        if (
+            checkpoint_every > 0
+            and checkpoint_path is not None
+            and state.step % checkpoint_every == 0
+        ):
+            from wormjepa.training.checkpointing import save_checkpoint
+
+            save_checkpoint(state, checkpoint_path)
+            logger.info("checkpoint saved at step %d -> %s", state.step, checkpoint_path)
 
         if log_path is not None:
             latent_stats = _compute_latent_stats(online_latent)

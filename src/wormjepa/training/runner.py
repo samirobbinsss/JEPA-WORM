@@ -8,7 +8,9 @@ compatibility — existing imports still work.
 
 from __future__ import annotations
 
+import logging
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import torch
@@ -52,6 +54,8 @@ __all__ = [
     "build_loader",
     "run_jepa",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def _select_device() -> torch.device:
@@ -264,7 +268,37 @@ def run_jepa(cfg: JEPARunConfig, run_id: str) -> tuple[MetricsOutput, JEPATraini
     )
     log_path = project_root() / "results" / run_id / "log.jsonl"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    clips_dir = log_path.parent / "clips"
+    # Clip/rollout visualisation (per-step PNGs + an MP4 for the GUI ClipViewer)
+    # is dev-loop only and not needed for metrics/gates. On the MooseFS network
+    # volume the MP4 finalize threw `RuntimeError: basic_ios::clear: iostream
+    # error` (write_end_of_file) and crashed the headline run mid-training, so it
+    # is OFF by default; opt in with WORMJEPA_WRITE_CLIPS=1 on a local-disk GUI run.
+    clips_dir = log_path.parent / "clips" if os.environ.get("WORMJEPA_WRITE_CLIPS") == "1" else None
+
+    # Cross-pod resumable checkpointing (opt-in via WORMJEPA_CHECKPOINT_EVERY).
+    # The resume checkpoint lives at a STABLE per-(config-slug, seed) path under
+    # results/_resume/ — independent of the timestamped run-id — so a fresh pod
+    # re-running the same config+seed finds and continues it. results/ is on the
+    # persistent network volume when WORMJEPA_RESULTS_ON_WORKSPACE=1, so the
+    # checkpoint survives pod close. The data ordering after a resume differs
+    # from an uninterrupted run (the loader iterator restarts), but the restored
+    # RNG + optimizer + weights make it a valid continuation — a documented
+    # non-determinism, not a correctness break. compute.json's wall-clock then
+    # reflects only the finishing pod's segment.
+    checkpoint_every = int(os.environ.get("WORMJEPA_CHECKPOINT_EVERY", "0"))
+    resume_path: Path | None = None
+    if checkpoint_every > 0:
+        from wormjepa.training.checkpointing import load_checkpoint
+
+        config_slug = run_id.rsplit("__", 1)[-1]
+        resume_dir = project_root() / "results" / "_resume" / f"{config_slug}__seed{cfg.jepa.seed}"
+        resume_dir.mkdir(parents=True, exist_ok=True)
+        resume_path = resume_dir / "checkpoint.pt"
+        done_marker = resume_dir / "done"
+        if resume_path.is_file() and not done_marker.is_file():
+            load_checkpoint(state, resume_path)
+            logger.info("resume: loaded checkpoint at step %d from %s", state.step, resume_path)
+
     train_jepa(
         training_cfg,
         train_loader,
@@ -272,7 +306,15 @@ def run_jepa(cfg: JEPARunConfig, run_id: str) -> tuple[MetricsOutput, JEPATraini
         graph_prior_target_edges=torch.randn(4),
         log_path=log_path,
         clips_dir=clips_dir,
+        checkpoint_path=resume_path,
+        checkpoint_every=checkpoint_every,
     )
+
+    # Mark this (config-slug, seed) complete so the remote sweep skips it on a
+    # pod restart (idempotent cross-pod sweep). Written only once training
+    # actually reached n_steps (train_jepa returns having advanced state.step).
+    if resume_path is not None and state.step >= cfg.jepa.n_steps:
+        (resume_path.parent / "done").write_text(f"{state.step}\n", encoding="utf-8")
 
     # Story 8.12a: persist the trained state so the gate-evaluation orchestrator
     # (Story 8.12c) can reload encoder + predictor + warm-start heads. Stored

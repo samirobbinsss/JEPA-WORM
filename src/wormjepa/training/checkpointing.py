@@ -36,7 +36,14 @@ def save_checkpoint(state: JEPATrainingState, path: Path) -> None:
         "warm_start": {name: head.state_dict() for name, head in state.warm_start_heads.items()},
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(payload, path)
+    # Atomic write: torch.save to a sibling temp file, then os.replace (an atomic
+    # rename within the same filesystem). A pod killed mid-write leaves the
+    # previous good checkpoint intact instead of a truncated, unloadable file —
+    # essential for the cross-pod resume path, where checkpoints live on the FUSE
+    # network volume and the writer can be SIGKILLed at any instant.
+    tmp_path = path.with_name(path.name + ".tmp")
+    torch.save(payload, tmp_path)
+    tmp_path.replace(path)  # atomic rename within the same filesystem
 
 
 def load_checkpoint(state: JEPATrainingState, path: Path) -> None:
