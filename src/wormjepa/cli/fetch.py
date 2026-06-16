@@ -28,6 +28,7 @@ import errno
 import importlib
 import logging
 import sys
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Annotated, get_args
 
@@ -122,6 +123,19 @@ def fetch_zenodo_subset(
             ),
         ),
     ] = 0,
+    workers: Annotated[
+        int,
+        typer.Option(
+            "--workers",
+            help=(
+                "Concurrent download streams. Zenodo bandwidth-caps each "
+                "connection (~1 MB/s), so parallel records multiply throughput: "
+                "8-16 pulls the ~45 GB subset in ~1 h instead of ~10 h. Per-record "
+                "dest dirs are disjoint, so there are no write races. 1 = the old "
+                "sequential behaviour."
+            ),
+        ),
+    ] = 8,
 ) -> None:
     """Fetch every record in the WBDB / OWMD Zenodo subset SPECs."""
     if dataset == "both":
@@ -137,39 +151,55 @@ def fetch_zenodo_subset(
 
     repo_root = project_root()
     failures: list[tuple[str, str, str]] = []  # (dataset, record_id, error)
+
+    def _download_one(ds_name: str, idx: int, total: int, rid: str, dest: Path) -> int:
+        typer.echo(f"[{ds_name} {idx}/{total}] zenodo:{rid} -> {dest}")
+        paths = download_zenodo_record(rid, dest)
+        typer.echo(f"  {rid}: {len(paths)} files")
+        return len(paths)
+
     for ds_name in targets:
         spec = importlib.import_module(_ZENODO_SUBSET_SPECS[ds_name]).SPEC
         records = list(spec.records)
         if max_records > 0:
             records = records[:max_records]
-        typer.echo(f"=== {ds_name}: {len(records)} records ===")
-        for i, pin in enumerate(records, start=1):
-            rid = pin.zenodo_record_id
-            dest = repo_root / "data" / "downloads" / ds_name / rid
-            typer.echo(f"[{ds_name} {i}/{len(records)}] zenodo:{rid} -> {dest}")
-            try:
-                paths = download_zenodo_record(rid, dest)
-            except WormJEPAError as exc:
-                logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
-                failures.append((ds_name, rid, str(exc)))
-                continue
-            except OSError as exc:
-                # Disk full / quota exceeded is not per-record recoverable —
-                # every remaining record would fail identically. Abort fast with
-                # an actionable message instead of a raw traceback or 190 more
-                # doomed attempts. The pull is idempotent/resumable, so freeing
-                # space (or pointing at a larger volume) and re-running continues.
-                if exc.errno in (errno.ENOSPC, errno.EDQUOT):
-                    msg = (
-                        f"out of disk space writing {dest} (errno {exc.errno}: "
-                        f"{exc.strerror}). Free space or target a larger volume, "
-                        f"then re-run — fetch resumes from what is already on disk."
-                    )
-                    raise WormJEPAError(msg) from exc
-                logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
-                failures.append((ds_name, rid, str(exc)))
-                continue
-            typer.echo(f"  {rid}: {len(paths)} files")
+        total = len(records)
+        typer.echo(f"=== {ds_name}: {total} records (workers={workers}) ===")
+        # Per-record downloads are independent (disjoint dest dirs), so fan them
+        # out across `workers` threads — the work is network-bound and Zenodo
+        # bandwidth-caps per connection, so concurrency is the throughput win.
+        # rid/dest are resolved here (in the dynamic-spec context) and only typed
+        # primitives are handed to the worker.
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+            fut_to_rid: dict[Future[int], str] = {}
+            for i, pin in enumerate(records, start=1):
+                rid = pin.zenodo_record_id
+                dest = repo_root / "data" / "downloads" / ds_name / rid
+                fut_to_rid[pool.submit(_download_one, ds_name, i, total, rid, dest)] = rid
+            for fut in as_completed(fut_to_rid):
+                rid = fut_to_rid[fut]
+                try:
+                    fut.result()
+                except WormJEPAError as exc:
+                    logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
+                    failures.append((ds_name, rid, str(exc)))
+                except OSError as exc:
+                    # Disk full / quota exceeded is not per-record recoverable —
+                    # every remaining record would fail identically. Cancel the
+                    # pending downloads and abort fast with an actionable message.
+                    # The pull is idempotent/resumable, so freeing space (or
+                    # targeting a larger volume) and re-running continues.
+                    if exc.errno in (errno.ENOSPC, errno.EDQUOT):
+                        for pending in fut_to_rid:
+                            pending.cancel()
+                        msg = (
+                            f"out of disk space writing data/downloads/{ds_name}/{rid} "
+                            f"(errno {exc.errno}: {exc.strerror}). Free space or target "
+                            f"a larger volume, then re-run — fetch resumes from disk."
+                        )
+                        raise WormJEPAError(msg) from exc
+                    logger.error("record %s (%s) failed: %s", rid, ds_name, exc)
+                    failures.append((ds_name, rid, str(exc)))
 
     if failures:
         typer.echo(f"\n{len(failures)} record(s) FAILED:")
