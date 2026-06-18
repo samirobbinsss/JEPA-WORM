@@ -14,7 +14,16 @@ Pose information may well be *present* in the encoder's spatial tokens but *invi
 
 ---
 
-## Tier 0 — Eval-only on existing checkpoint (hours, no retrain)
+## Implementation status (2026-06-18)
+
+**Exp A + Exp E are implemented, unit-tested, committed** (`feat(eval): exploratory Exp A pose-decodability + Exp E held-out baseline`). Both are env-gated and OFF by default, so the canonical frozen eval is byte-identical when unset.
+- **Exp A** — `WORMJEPA_EXP_POSE_DECODABILITY=1` adds a `pose_decodability_r2` entry to the eval: leave-one-worm-out ridge pose-R² from the spatial-token summary `[mean,std,max]` vs the mean-pooled latent. `partial = spatial − pooled > 0` ⇒ mean-pooling discards pose-relevant structure (the readout the kill_criterion uses).
+- **Exp E** — `WORMJEPA_EXP_BASELINE_HOLDOUT=1` fits the eigenworm baseline on a disjoint `seed+20000` split (eval cohort unseen), removing the train-test contamination.
+- **Run both:** `WORMJEPA_EXP_POSE_DECODABILITY=1 WORMJEPA_EXP_BASELINE_HOLDOUT=1 wormjepa eval --run <run-id>`.
+
+**⚠️ Checkpoint reality:** the seed-42 checkpoint was lost when the pod was terminated (2026-06-18). Tier 0 is therefore **no longer eval-only** — it needs a re-train of seed 42 (~14h) first; the instrumented eval then answers Exp A + Exp E in one post-train pass. **Pull the checkpoint local this time.**
+
+## Tier 0 — Eval-only on existing checkpoint (hours, no retrain — once a checkpoint exists)
 
 All load encoder+predictor+pose_decoder from the saved checkpoint, forward-only (`checkpointing.py:62-64`, `orchestrator.py:1006-1063`). Reference = the existing 3.3× number.
 
