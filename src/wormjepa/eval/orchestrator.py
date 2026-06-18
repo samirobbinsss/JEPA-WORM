@@ -30,7 +30,7 @@ worm-level bootstrap CIs into a :class:`MetricsOutput`, and invokes
   produce a real verdict (cleared/fired) instead of the previous
   pending.
 - 8.12c.3+ (this batch): motif_ari probe + within_state stratified
-  partial-R² probe + non-trivial-neuron-subset partial-R² probe, plus
+  partial-R^2 probe + non-trivial-neuron-subset partial-R^2 probe, plus
   a Tierpsy-approximating kinematic baseline (centroid + velocity +
   curvature proxy + body-length proxy + raw pose + first-diff) that
   replaces the previous ``pose | diff`` proxy. Synthetic
@@ -72,10 +72,11 @@ Today's deliverables:
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import torch
@@ -127,17 +128,25 @@ def _baaiworm_spec_from_train(cfg: JEPARunConfig) -> DatasetLoaderSpec | None:
     return None
 
 
-def _build_eval_loader_spec(cfg: JEPARunConfig) -> tuple[DatasetLoaderSpec, int]:
+def _build_eval_loader_spec(
+    cfg: JEPARunConfig, *, seed_offset: int = 10000
+) -> tuple[DatasetLoaderSpec, int]:
     """Return the held-out baaiworm eval loader's spec + seed.
 
     Split from :func:`_build_eval_loader` so the same spec can drive
     both loader construction and the encoder-cache fingerprint. Keeps
     the cache key bytewise-stable across runs that share a (cfg,
     checkpoint) pair.
+
+    ``seed_offset`` defaults to 10000 (the canonical eval cohort) — this
+    default MUST stay 10000 so the encoder-cache fingerprint and the eval
+    cohort are bytewise-unchanged. A different offset (e.g. 20000) builds a
+    DISJOINT cohort, used only by the exploratory de-contaminated baseline
+    (:func:`_build_baseline_train_loader`, Exp E).
     """
     train_spec = _baaiworm_spec_from_train(cfg)
     n_keypoints = train_spec.n_keypoints if train_spec is not None else 4
-    eval_seed = cfg.jepa.seed + 10000
+    eval_seed = cfg.jepa.seed + seed_offset
     spec = DatasetLoaderSpec(
         name="baaiworm",
         clip_frames=16,
@@ -162,12 +171,25 @@ def _build_eval_loader(cfg: JEPARunConfig) -> Any:
     Phase 0 v0 proxy: the pre-registered eval cohort (WormID HL+SF,
     Flavell behavioural cohort) is gamma-deferred at materialization;
     until those are reversed, baaiworm at seed+10000 is the only
-    cohort that satisfies the FR8 pose+neural contract for partial-R²
+    cohort that satisfies the FR8 pose+neural contract for partial-R^2
     and session-classifier probes. Documented per-probe in the
     MetricEntry notes.
     """
     spec, eval_seed = _build_eval_loader_spec(cfg)
     return build_loader([spec], seed=eval_seed)
+
+
+# Exploratory (Exp E): a DISJOINT baaiworm split (a separate seed offset) so the
+# transformer-eigenworms baseline can be fit on data the eval cohort never sees,
+# removing the train-test contamination. Off unless WORMJEPA_EXP_BASELINE_HOLDOUT=1.
+_EXP_BASELINE_HOLDOUT_ENV = "WORMJEPA_EXP_BASELINE_HOLDOUT"
+_BASELINE_TRAIN_SEED_OFFSET = 20000
+
+
+def _build_baseline_train_loader(cfg: JEPARunConfig) -> Any:
+    """Disjoint baaiworm split (seed+20000) for the baseline's fit (Exp E)."""
+    spec, seed = _build_eval_loader_spec(cfg, seed_offset=_BASELINE_TRAIN_SEED_OFFSET)
+    return build_loader([spec], seed=seed)
 
 
 class EvalCache:
@@ -317,7 +339,7 @@ def _flatten_cache(
 
 
 def _run_partial_r2_probe(cache: _EvalCache, n_bootstrap: int = 1000) -> MetricEntry:
-    """Leave-one-worm-out partial-R² of JEPA latent over a kinematic baseline,
+    """Leave-one-worm-out partial-R^2 of JEPA latent over a kinematic baseline,
     predicting neural activity. Wraps result into a ``neural_probe_partial_r2``
     MetricEntry consumed by :func:`evaluate_gates`.
 
@@ -372,7 +394,7 @@ def _run_partial_r2_probe(cache: _EvalCache, n_bootstrap: int = 1000) -> MetricE
             "kinematic baseline = hand-engineered Tierpsy-approx features "
             "(centroid + velocity + curvature + length + raw pose + diff); "
             "real Tierpsy-256 + pose-TCN integration is Phase 0 Growth. "
-            "Worm-level bootstrap over leave-one-worm-out per-worm partial-R²."
+            "Worm-level bootstrap over leave-one-worm-out per-worm partial-R^2."
         ),
     )
 
@@ -558,11 +580,11 @@ def _run_motif_ari_probe(cache: _EvalCache) -> MetricEntry | None:
 def _run_within_state_partial_r2_probe(
     cache: _EvalCache, n_bootstrap: int = 1000
 ) -> MetricEntry | None:
-    """Per-state partial-R² stratification probe.
+    """Per-state partial-R^2 stratification probe.
 
     For each observed behavioral_state class, restricts the cache to
     frames in that state and runs the same leave-one-worm-out
-    partial-R² machinery as :func:`_run_partial_r2_probe`. One
+    partial-R^2 machinery as :func:`_run_partial_r2_probe`. One
     :class:`SubEntry` per state holding its per-state CI; the top-level
     CI is a NaN placeholder.
 
@@ -643,7 +665,7 @@ def _run_within_state_partial_r2_probe(
             f"Phase 0 v0: stratification over synthetic behavioral_state "
             f"from baaiworm velocity binning (3 classes: still/slow/fast); "
             f"real Flavell behavioural labels are gamma-deferred. Per-state "
-            f"leave-one-worm-out partial-R² with worm-level bootstrap; states "
+            f"leave-one-worm-out partial-R^2 with worm-level bootstrap; states "
             f"skipped: {skipped_str}."
         ),
     )
@@ -652,11 +674,11 @@ def _run_within_state_partial_r2_probe(
 def _run_neuron_subset_partial_r2_probe(
     cache: _EvalCache, k: int = 4, n_bootstrap: int = 1000
 ) -> MetricEntry | None:
-    """Top-k highest-variance neurons partial-R² diagnostic.
+    """Top-k highest-variance neurons partial-R^2 diagnostic.
 
     Picks the ``k`` neurons (columns of the per-frame neural matrix)
     with the highest variance across the cache, restricts the
-    partial-R² regression to predict ONLY those neurons, and returns a
+    partial-R^2 regression to predict ONLY those neurons, and returns a
     :class:`MetricEntry` named ``non_trivial_neuron_subset_partial_r2``.
 
     Phase 0 v0 caveat (recorded in entry notes): "top-k variance
@@ -731,7 +753,7 @@ def _run_neuron_subset_partial_r2_probe(
             f"Phase 0 v0: top-k variance subset (k={k_eff}, neuron_indices="
             f"{top_idx_sorted.tolist()} of {n_avail} available); pre-registered "
             f"neuron list is Phase 0 Growth pending Flavell + WormID labels. "
-            f"Same leave-one-worm-out partial-R² machinery as the headline "
+            f"Same leave-one-worm-out partial-R^2 machinery as the headline "
             f"probe, restricted to the top-variance neural target columns."
         ),
     )
@@ -878,6 +900,112 @@ def _run_future_pose_probe(
     )
 
 
+_EXP_POSE_DECODABILITY_ENV = "WORMJEPA_EXP_POSE_DECODABILITY"
+
+
+def _spatial_token_features(
+    state: JEPATrainingState, cfg: JEPARunConfig, *, max_clips: int
+) -> tuple[np.ndarray, list[str]]:
+    """Re-encode the eval cohort via ``forward_tokens`` and return per-frame
+    spatial-summary features ``[mean, std, max]`` over the S spatial tokens, plus
+    a parallel per-frame worm-id list.
+
+    Iterates ``_build_eval_loader(cfg)`` with the SAME pose/neural skip and the
+    SAME ``max_clips`` break as :func:`_build_eval_cache`, so the rows line up
+    one-to-one with :func:`_flatten_cache`'s ordering (the baaiworm loader is
+    seeded, so a re-iteration is deterministic). Returns ``(empty, [])`` when the
+    encoder has no ``forward_tokens`` (legacy encoders) so the probe skips.
+    """
+    online = state.online_encoder
+    forward_tokens = getattr(online, "forward_tokens", None)
+    if not callable(forward_tokens):
+        return np.empty((0, 0), dtype=np.float64), []
+    online.eval()
+    device = next(online.parameters()).device
+    feats: list[np.ndarray] = []
+    worm_per_frame: list[str] = []
+    with torch.no_grad():
+        for sample in _build_eval_loader(cfg):
+            if sample.pose is None or sample.neural is None:
+                continue
+            video = sample.video_clip.unsqueeze(0).to(device)  # (1, T, C, H, W)
+            tokens = cast("torch.Tensor", forward_tokens(video)).squeeze(0)  # (T, S, D)
+            summary = torch.cat(
+                [tokens.mean(dim=1), tokens.std(dim=1), tokens.amax(dim=1)], dim=-1
+            )  # (T, 3D): mean/std/max pooled over the S spatial tokens
+            feats.append(summary.cpu().numpy().astype(np.float64))
+            worm_per_frame.extend([str(sample.worm_id)] * summary.shape[0])
+            if len(feats) >= max_clips:
+                break
+    if not feats:
+        return np.empty((0, 0), dtype=np.float64), []
+    return np.concatenate(feats, axis=0), worm_per_frame
+
+
+def _run_pose_decodability_probe(
+    state: JEPATrainingState,
+    cfg: JEPARunConfig,
+    cache: _EvalCache,
+    *,
+    n_bootstrap: int = 1000,
+) -> MetricEntry | None:
+    """EXPLORATORY (Exp A) — NOT a pre-registered gate; fires nothing.
+
+    Compares leave-one-worm-out ridge decodability of CURRENT-frame pose from
+    (a) the mean-POOLED latent (the kill_criterion readout) vs (b) a SPATIAL-
+    token summary ``[mean, std, max]``. Reuses :func:`partial_r2` with the
+    spatial feature as ``jepa_latent`` and the pooled latent as
+    ``kinematic_features`` so ``r2_jepa`` = spatial-pose-R^2, ``r2_kinematic`` =
+    pooled-pose-R^2, and ``partial_r2`` = spatial - pooled. A positive value
+    means mean-pooling discards pose-relevant spatial structure — i.e. the
+    kill_criterion firing is partly a *readout* artifact, not a true encoder
+    failure. Off unless ``WORMJEPA_EXP_POSE_DECODABILITY=1``.
+    """
+    pooled, poses, _neural, worm_per_frame, _ = _flatten_cache(cache)
+    spatial, worm_spatial = _spatial_token_features(state, cfg, max_clips=len(cache.latents))
+    if spatial.shape[0] != pooled.shape[0] or worm_spatial != worm_per_frame:
+        logger.warning(
+            "pose_decodability: spatial/pooled frame mismatch (%s vs %s); skipping",
+            spatial.shape,
+            pooled.shape,
+        )
+        return None
+    if len(dict.fromkeys(worm_per_frame)) < 2:
+        return None
+    result = partial_r2(
+        jepa_latent=spatial,
+        kinematic_features=pooled,
+        neural_target=poses,
+        worm_ids=worm_per_frame,
+    )
+    grouping = WormGrouping(worm_ids=tuple(WormID(w) for w in result.worm_ids))
+    per_worm = np.asarray(result.per_worm_partial_r2)
+    ci = bootstrap_ci(per_worm, grouping, n_samples=n_bootstrap, method="bca")
+
+    def _point(value: float) -> BootstrapCI:
+        return BootstrapCI(point=value, lower=value, upper=value, n_samples=1, method="percentile")
+
+    return MetricEntry(
+        name="pose_decodability_r2",
+        producer="jepa",
+        ci=ci,
+        sub_entries=[
+            SubEntry(key="pose_r2_spatial_tokens", ci=_point(result.r2_jepa)),
+            SubEntry(key="pose_r2_mean_pooled", ci=_point(result.r2_kinematic)),
+        ],
+        notes=(
+            "EXPLORATORY (Exp A; fires NO gate). Leave-one-worm-out ridge "
+            "pose-decodability. ci = (spatial - pooled) per-worm R^2 (bca). "
+            "sub_entries: pose_r2_spatial_tokens uses [mean,std,max] over the "
+            "encoder's S spatial tokens; pose_r2_mean_pooled uses the mean-pooled "
+            "latent (the kill_criterion readout). ci.point/lower > 0 means "
+            "mean-pooling discards pose-relevant spatial structure, i.e. the "
+            "kill_criterion firing is partly a readout artifact. Synthetic "
+            "baaiworm cohort (seed+10000)."
+        ),
+    )
+
+
 def _run_transformer_eigenworms_future_pose_probe(
     cfg: JEPARunConfig,
     cache: _EvalCache,
@@ -941,7 +1069,19 @@ def _run_transformer_eigenworms_future_pose_probe(
         horizons_seconds=tuple(h for h, _ in horizon_offsets),
         frame_dt_seconds=1.0 / _CLIP_ASSUMED_FPS,
     )
-    baseline.fit(samples)
+    # Exp E (exploratory): optionally fit on a DISJOINT held-out split
+    # (seed+20000) the eval cohort never sees, removing the train-test
+    # contamination. Rollout + scoring still happen on the eval cohort
+    # (``samples``). Default (gate off) keeps the Phase 0 v0 behaviour: fit on
+    # the eval cohort, with the contamination caveat in the notes below.
+    if os.environ.get(_EXP_BASELINE_HOLDOUT_ENV) == "1":
+        fit_samples = [s for s in _build_baseline_train_loader(cfg) if s.pose is not None]
+        decontaminated = bool(fit_samples)
+        if not fit_samples:
+            fit_samples, decontaminated = samples, False
+    else:
+        fit_samples, decontaminated = samples, False
+    baseline.fit(fit_samples)
 
     # Slice predicted + ground-truth to 2D to align with the JEPA-side
     # pose_decoder (which is 2D-only). baaiworm pose is (T, K, 3); the
@@ -990,9 +1130,13 @@ def _run_transformer_eigenworms_future_pose_probe(
         f"Predicted + ground-truth pose sliced to first 2 coords (x, y) to "
         f"align with the JEPA-side PoseDecoderHead's 2D output so the "
         f"kill_criterion gate compares apples-to-apples. "
-        f"Train-test caveat: baseline fit on eval cohort because Phase 0 v0 "
-        f"has no separate baseline-eval train cohort wired; a Phase 0 Growth "
-        f"follow-up will materialise a held-out train split for the baseline."
+    ) + (
+        "Exp E: baseline fit on a DISJOINT held-out split (seed+20000); the "
+        "eval cohort was UNSEEN during fit — train-test contamination removed."
+        if decontaminated
+        else "Train-test caveat: baseline fit on eval cohort because Phase 0 v0 "
+        "has no separate baseline-eval train cohort wired; a Phase 0 Growth "
+        "follow-up will materialise a held-out train split for the baseline."
     )
     return MetricEntry(
         name=entry.name,
@@ -1066,9 +1210,9 @@ def reconstruct_state_from_run(run_dir: Path) -> tuple[JEPARunConfig, JEPATraini
 def _build_eval_cache_and_run_partial_r2(
     run_dir: Path,
 ) -> tuple[MetricEntry | None, _EvalCache | None]:
-    """Helper: reconstruct + cache + partial_R² for ablation runs.
+    """Helper: reconstruct + cache + partial_R^2 for ablation runs.
 
-    Used by :func:`evaluate_run_with_ablation` to compute partial_R² for
+    Used by :func:`evaluate_run_with_ablation` to compute partial_R^2 for
     a *control* run without running the full probe suite. Returns
     (entry, cache) so the caller can reuse the cache for downstream
     diagnostics if needed. Returns (None, None) on any failure.
@@ -1094,9 +1238,9 @@ def _wald_delta_entry(
     name: str,
     notes: str,
 ) -> MetricEntry:
-    """Build a ΔR² MetricEntry from primary vs control partial-R² entries.
+    """Build a ΔR^2 MetricEntry from primary vs control partial-R^2 entries.
 
-    delta_R² = primary.partial_R² - control.partial_R², with a CI derived
+    delta_R^2 = primary.partial_R^2 - control.partial_R^2, with a CI derived
     from a Wald-summed-variance normal approximation (independence assumed
     between the two runs' bootstrap distributions — appropriate when the
     runs differ by seed + shard). Shared by the neural-prior and BAAIWorm
@@ -1130,7 +1274,7 @@ def evaluate_run_with_ablation(
     """Evaluate ``primary_run_dir`` and append a neural_prior_ablation
     entry computed against ``control_run_dir``.
 
-    Phase 0 v0 ablation: delta_R² = primary.partial_R² - control.partial_R²
+    Phase 0 v0 ablation: delta_R^2 = primary.partial_R^2 - control.partial_R^2
     where the control run was trained without the warm_start.neural
     contribution. The orchestrator does NOT verify that the control
     run actually had warm_start.neural=False — that's a caller
@@ -1138,7 +1282,7 @@ def evaluate_run_with_ablation(
     cli/eval.py).
 
     The neural_prior_ablation gate's threshold is 0.02 (FR34); the
-    delta_R² entry's CI is computed as primary.r2 - control.r2 with
+    delta_R^2 entry's CI is computed as primary.r2 - control.r2 with
     a Wald-approximated CI by summing variances (independence
     assumption between the two runs' bootstrap distributions —
     appropriate when seed and data shards differ).
@@ -1152,8 +1296,8 @@ def evaluate_run_with_baaiworm_ablation(
     """Evaluate ``primary_run_dir`` and append a baaiworm_augmentation
     ablation entry computed against ``baaiworm_control_run_dir``.
 
-    Phase 0 v0 ablation (PRD row 5): delta_R² = primary.partial_R²
-    (trained WITH BAAIWorm augmentation) - control.partial_R²
+    Phase 0 v0 ablation (PRD row 5): delta_R^2 = primary.partial_R^2
+    (trained WITH BAAIWorm augmentation) - control.partial_R^2
     (trained WITHOUT BAAIWorm augmentation). The orchestrator does NOT
     verify that the control run actually had BAAIWorm augmentation
     removed — that's a caller contract (see the ``--baaiworm-control``
@@ -1176,7 +1320,7 @@ def evaluate_run_with_ablations(
     baaiworm_control_run_dir: Path | None = None,
 ) -> tuple[MetricsOutput, GateStatus]:
     """Evaluate ``primary_run_dir`` once and append zero, one, or both
-    ablation ΔR² entries against the supplied sibling control runs.
+    ablation ΔR^2 entries against the supplied sibling control runs.
 
     - ``control_run_dir`` → neural_prior_ablation_delta_r2 (Row 4,
       threshold 0.02, fires via gates.py + Holm).
@@ -1184,7 +1328,7 @@ def evaluate_run_with_ablations(
       (Row 5, reported-only, no threshold, never fires).
 
     Each control arm is independent: when its directory is omitted, or it
-    produces no partial-R² entry, the corresponding ablation is simply not
+    produces no partial-R^2 entry, the corresponding ablation is simply not
     appended — its gate stays ``pending`` and no number is fabricated,
     mirroring the neural-prior behaviour exactly.
     """
@@ -1200,7 +1344,7 @@ def evaluate_run_with_ablations(
         if control_entry is None:
             logger.warning(
                 "evaluate_run_with_ablations: neural-prior control run %s produced no "
-                "partial_R² entry; neural_prior_ablation gate stays pending.",
+                "partial_R^2 entry; neural_prior_ablation gate stays pending.",
                 control_run_dir,
             )
         else:
@@ -1212,8 +1356,8 @@ def evaluate_run_with_ablations(
                     control_entry,
                     name="neural_prior_ablation_delta_r2",
                     notes=(
-                        f"Phase 0 v0 ablation: delta_R² = primary.partial_R² ({p_point:.4f}) "
-                        f"- control.partial_R² ({c_point:.4f}) = {p_point - c_point:.4f}. "
+                        f"Phase 0 v0 ablation: delta_R^2 = primary.partial_R^2 ({p_point:.4f}) "
+                        f"- control.partial_R^2 ({c_point:.4f}) = {p_point - c_point:.4f}. "
                         f"control_run_dir={control_run_dir.name}. CI via Wald-summed-variance "
                         f"normal approximation (independence assumed between the two runs' "
                         f"bootstrap distributions; the assumption holds when the runs differ "
@@ -1228,7 +1372,7 @@ def evaluate_run_with_ablations(
         if baaiworm_entry is None:
             logger.warning(
                 "evaluate_run_with_ablations: baaiworm control run %s produced no "
-                "partial_R² entry; baaiworm_augmentation ablation stays pending.",
+                "partial_R^2 entry; baaiworm_augmentation ablation stays pending.",
                 baaiworm_control_run_dir,
             )
         else:
@@ -1241,8 +1385,8 @@ def evaluate_run_with_ablations(
                     name="baaiworm_augmentation_ablation_delta_r2",
                     notes=(
                         f"Phase 0 v0 ablation (PRD row 5, reported-only — no threshold): "
-                        f"delta_R² = primary.partial_R² with BAAIWorm augmentation "
-                        f"({p_point:.4f}) - control.partial_R² without BAAIWorm augmentation "
+                        f"delta_R^2 = primary.partial_R^2 with BAAIWorm augmentation "
+                        f"({p_point:.4f}) - control.partial_R^2 without BAAIWorm augmentation "
                         f"({c_point:.4f}) = {p_point - c_point:.4f}. "
                         f"baaiworm_control_run_dir={baaiworm_control_run_dir.name}. CI via "
                         f"Wald-summed-variance normal approximation (independence assumed "
@@ -1320,6 +1464,15 @@ def evaluate_run(run_dir: Path) -> tuple[MetricsOutput, GateStatus]:
                 entries.append(fp_baseline_entry)
         except Exception:
             logger.exception("evaluate_run: transformer_eigenworms future_pose probe failed")
+        # Exploratory (Exp A): spatial-vs-pooled pose-decodability. Off by
+        # default; fires no gate. Default-off => canonical entries unchanged.
+        if os.environ.get(_EXP_POSE_DECODABILITY_ENV) == "1":
+            try:
+                pd_entry = _run_pose_decodability_probe(state, cfg, cache)
+                if pd_entry is not None:
+                    entries.append(pd_entry)
+            except Exception:
+                logger.exception("evaluate_run: EXP pose_decodability probe failed")
         # 8.12c.3+: motif_ari + within_state + neuron_subset diagnostics.
         # Each is wrapped in try/except so a single failure doesn't nuke the
         # whole eval; the probes don't fire any primary gate, only diagnostics.
@@ -1350,8 +1503,8 @@ def evaluate_run(run_dir: Path) -> tuple[MetricsOutput, GateStatus]:
 
     # TODO (Story 8.12c.2+): future_pose (needs predictor + pose decoder
     # + horizon scaffolding), motif_ari (needs Flavell behavioural labels,
-    # currently deferred), within_state stratified R², non-trivial-neuron
-    # subset R². Both ablations (neural_prior + BAAIWorm-augmentation) are
+    # currently deferred), within_state stratified R^2, non-trivial-neuron
+    # subset R^2. Both ablations (neural_prior + BAAIWorm-augmentation) are
     # wired via the sibling-control path in evaluate_run_with_ablations
     # (invoked by `wormjepa eval --control` / `--baaiworm-control`); the
     # single-run path here leaves them pending. Holm correction runs at
